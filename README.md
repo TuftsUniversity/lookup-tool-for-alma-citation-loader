@@ -14,6 +14,12 @@ Before hosting this app on your local web server, you need to go into api.php an
 
 **Input and Output:**
 
+Note this input table can be created from an AI service such as chatgpt, directly from a bibliography-style citation, with a prompt such as the following:
+
+"Make the following citations into a table of bibliographic metadata with columns "Title", "Author", "Contributor", "Publisher", and "Date"
+
+Make 3 additional columns in the output table : "Course Number", "Instructor Last Name", and "Course Semester " and leave them blank for user entry "
+
 1. Input data dictionary
 
     1. The input sheet gathered from faculty email should have the following columns with the following characteristics
