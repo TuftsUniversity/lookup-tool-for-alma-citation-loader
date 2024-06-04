@@ -7,43 +7,26 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
     <script src="app.js" defer></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        #hourglass {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9999;
-        }
-        .spinner {
-            border: 16px solid #f3f3f3;
-            border-top: 16px solid #3498db;
-            border-radius: 50%;
-            width: 120px;
-            height: 120px;
-            animation: spin 2s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    
 </head>
 <body>
     <div id="hourglass">
         <div class="spinner"></div>
     </div>
+    <header>
+       <div class="logo">Tufts Libraries</div> 
+    </header>
+    <div class="content">
+    <h1>Lookup Tool</h1>
     
-    <h1>Upload Excel File</h1>
-    <input type="file" id="fileInput" accept=".xlsx, .xls">
-    <button onclick="handleUpload()">Upload</button>
-    <button id="downloadBtn" style="display:none;">Download Results</button>
+      <label labelfor="fileInput">Upload Excel File</label>
+      <input type="file" id="fileInput" accept=".xlsx, .xls">
+      <button onclick="handleUpload()">Upload</button>
+      <button id="downloadBtn" style="display:none;">Download Results</button>
     
     <h2>Item Policy Codes for Reserves</h2>
     <table>
+        <caption class="vhide">The table shows policy codes for reserves</caption>
         <tr>
             <th>Item Policy Name</th>
             <th>Item Policy Code</th>
@@ -60,7 +43,7 @@
         <tr><td>Reserve Book Room - 3 Day Item</td><td>RBR3DItem</td></tr>
         <tr><td>Reserve Book Room - 7 Day Item</td><td>RBR7DItem</td></tr>
     </table>
-    
+    </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const hourglass = document.getElementById("hourglass");
