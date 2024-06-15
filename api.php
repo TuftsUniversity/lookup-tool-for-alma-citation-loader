@@ -18,9 +18,9 @@ if (empty($data)) {
     exit;
 }
 
-$apiKeyPrimo = 'PLACE PRIMO SEARCH API KEY HERE'; 
-$apiKeyCourses = 'PLACE COURSE API KEY HERE';
-$apiBib = "PLACE BIB API KEY HERE";
+$apiKeyPrimo = 'ENTER PRIMO API KEY HERE'; 
+$apiKeyCourses = 'ENTER COURSE API KEY HERE';
+$apiBib = "ENTER BIB API KEY HERE";
 
 $results = [];
 foreach ($data as $record) {
