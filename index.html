@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excel Upload and API Query</title>
+    <title>Course Citations Upload</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
     <script src="app.js" defer></script>
-    
 </head>
 <body>
     <div id="hourglass">
@@ -17,32 +15,44 @@
        <div class="logo">Tufts Libraries</div> 
     </header>
     <div class="content">
-    <h1>Lookup Tool</h1>
-    
-      <label labelfor="fileInput">Upload Excel File</label>
-      <input type="file" id="fileInput" accept=".xlsx, .xls">
-      <button onclick="handleUpload()">Upload</button>
-      <button id="downloadBtn" style="display:none;">Download Results</button>
-    
-    <h2>Item Policy Codes for Reserves</h2>
-    <table>
-        <caption class="vhide">The table shows policy codes for reserves</caption>
-        <tr>
-            <th>Item Policy Name</th>
-            <th>Item Policy Code</th>
-        </tr>
-        <tr><td>Reserve Book Room - 3 Hour Item</td><td>RBR3HItem</td></tr>
-        <tr><td>Reserve Book Room - 2 Hour Overnight Item</td><td>RBR2HONItem</td></tr>
-        <tr><td>Reserve Book Room - 3 Hour Overnight Item</td><td>RBR3HONItem</td></tr>
-        <tr><td>Reserve Book Room - 4 Hour Item</td><td>RBR4HItem</td></tr>
-        <tr><td>Reserve Book Room - 4 Hour Overnight Item</td><td>RBR4HONItem</td></tr>
-        <tr><td>Reserve Book Room - 12 Hour Overnight Item</td><td>RBR12HONItem</td></tr>
-        <tr><td>Reserve Book Room - Overnight Item</td><td>RBRONItem</td></tr>
-        <tr><td>Reserve Book Room - 24 Hour/1 Day Item</td><td>RBR24H1DItem</td></tr>
-        <tr><td>Reserve Book Room - 2 Day Item</td><td>RBR2DItem</td></tr>
-        <tr><td>Reserve Book Room - 3 Day Item</td><td>RBR3DItem</td></tr>
-        <tr><td>Reserve Book Room - 7 Day Item</td><td>RBR7DItem</td></tr>
-    </table>
+        <h1>Course Citations Upload Tool</h1>
+
+        <form id="uploadForm">
+            <div id="courseFields">
+                <div class="courseRow">
+                    <label for="courseNumber">Course Number</label>
+                    <input type="text" name="courseNumber" required>
+                    <label for="courseInstructor">Course Instructor</label>
+                    <input type="text" name="courseInstructor" required>
+                    <label for="courseSemester">Course Semester</label>
+                    <input type="text" name="courseSemester" required>
+                    <label for="courseCitations">Course Citations</label>
+                    <textarea name="courseCitations" rows="5" required></textarea>
+                    <button type="button" onclick="addCourseRow()">Add More</button>
+                </div>
+            </div>
+            <button type="submit">Submit</button>
+        </form>
+
+        <h2>Item Policy Codes for Reserves</h2>
+        <table>
+            <caption class="vhide">The table shows policy codes for reserves</caption>
+            <tr>
+                <th>Item Policy Name</th>
+                <th>Item Policy Code</th>
+            </tr>
+            <tr><td>Reserve Book Room - 3 Hour Item</td><td>RBR3HItem</td></tr>
+            <tr><td>Reserve Book Room - 2 Hour Overnight Item</td><td>RBR2HONItem</td></tr>
+            <tr><td>Reserve Book Room - 3 Hour Overnight Item</td><td>RBR3HONItem</td></tr>
+            <tr><td>Reserve Book Room - 4 Hour Item</td><td>RBR4HItem</td></tr>
+            <tr><td>Reserve Book Room - 4 Hour Overnight Item</td><td>RBR4HONItem</td></tr>
+            <tr><td>Reserve Book Room - 12 Hour Overnight Item</td><td>RBR12HONItem</td></tr>
+            <tr><td>Reserve Book Room - Overnight Item</td><td>RBRONItem</td></tr>
+            <tr><td>Reserve Book Room - 24 Hour/1 Day Item</td><td>RBR24H1DItem</td></tr>
+            <tr><td>Reserve Book Room - 2 Day Item</td><td>RBR2DItem</td></tr>
+            <tr><td>Reserve Book Room - 3 Day Item</td><td>RBR3DItem</td></tr>
+            <tr><td>Reserve Book Room - 7 Day Item</td><td>RBR7DItem</td></tr>
+        </table>
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -50,15 +60,24 @@
             hourglass.style.display = "none";
         });
 
-        function handleUpload() {
-            const hourglass = document.getElementById("hourglass");
-            hourglass.style.display = "block";
-            
-            // Simulate a file upload delay
-            setTimeout(() => {
-                hourglass.style.display = "none";
-                alert('Upload complete'); // Replace with actual upload logic
-            }, 2000);
+        function addCourseRow() {
+            const courseFields = document.getElementById("courseFields");
+            const newCourseRow = document.createElement("div");
+            newCourseRow.classList.add("courseRow");
+
+            newCourseRow.innerHTML = `
+                <label for="courseNumber">Course Number</label>
+                <input type="text" name="courseNumber" required>
+                <label for="courseInstructor">Course Instructor</label>
+                <input type="text" name="courseInstructor" required>
+                <label for="courseSemester">Course Semester</label>
+                <input type="text" name="courseSemester" required>
+                <label for="courseCitations">Course Citations</label>
+                <textarea name="courseCitations" rows="5" required></textarea>
+                <button type="button" onclick="addCourseRow()">Add More</button>
+            `;
+
+            courseFields.appendChild(newCourseRow);
         }
     </script>
 </body>
