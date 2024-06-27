@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Citations Upload</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <div id="hourglass">
+        <div class="spinner"></div>
+    </div>
+    <header>
+        <div class="logo">Tufts Libraries</div>
+    </header>
+    <div class="content">
+        <h1>Course Citations Upload Tool</h1>
+        <p>This lookup tool finds Alma metadata like MMS ID, course code, barcode, etc for citations that come in from faculty, if we own them, and outputs in a format that can be uploaded to the Alma citation loader cloud app.</p>
+        <p>Note that if there is no match in Alma, the output sheet will record "No results" for that citation. You'll want to take these out of your spreadsheet and look into acquisitions for them.</p>
+        <p>To use this form, take citations in bibliography from faculty emails, and paste them into <a href="https://anystyle.io/">https://anystyle.io/</a>.</p>
+        <p>Copy the CSL JSON and paste it in the text area. Create a row for each course with the list of citations posted in the text area. If you have another course with its own citations, create a new row. You can process them all together</p>
+        <form id="uploadForm">
+            <div id="courseFields">
+                <div class="courseRow">
+                    <div class="courseField">
+                        <label for="courseNumber">Course Number</label>
+                        <input type="text" name="courseNumber" required>
+                    </div>
+                    <div class="courseField">
+                        <label for="courseInstructor">Course Instructor</label>
+                        <input type="text" name="courseInstructor" required>
+                    </div>
+                    <div class="courseField">
+                        <label for="courseSemester">Course Semester</label>
+                        <input type="text" name="courseSemester" required>
+                    </div>
+                    <div class="courseField">
+                        <label for="courseCitations">Course Citations</label>
+                        <textarea id="citations" name="courseCitations" rows="5" required></textarea>
+                    </div>
+                    <button type="button" class="addMoreButton" onclick="addCourseRow()">Add More</button>
+                </div>
+            </div>
+            <button type="submit" id="submitButton">Submit</button>
+        </form>
+
+        <div id="progressContainer">
+            <label for="progressBar">Processing Progress:</label>
+            <progress id="progressBar" value="0" max="100"></progress>
+        </div>
+
+        <h2>Item Policy Codes for Reserves</h2>
+        <table>
+            <caption class="vhide">The table shows item policy codes for reserves.</caption>
+            <p>The table shows item policy codes for reserves. If you want to include temporary item policies for physical items so that they're assigned when you upload to the citation loader use the code here.</p>
+            <tr>
+                <th>Item Policy Name</th>
+                <th>Item Policy Code</th>
+            </tr>
+            <tr><td>Reserve Book Room - 3 Hour Item</td><td>RBR3HItem</td></tr>
+            <tr><td>Reserve Book Room - 2 Hour Overnight Item</td><td>RBR2HONItem</td></tr>
+            <tr><td>Reserve Book Room - 3 Hour Overnight Item</td><td>RBR3HONItem</td></tr>
+            <tr><td>Reserve Book Room - 4 Hour Item</td><td>RBR4HItem</td></tr>
+            <tr><td>Reserve Book Room - 4 Hour Overnight Item</td><td>RBR4HONItem</td></tr>
+            <tr><td>Reserve Book Room - 12 Hour Overnight Item</td><td>RBR12HONItem</td></tr>
+            <tr><td>Reserve Book Room - Overnight Item</td><td>RBRONItem</td></tr>
+            <tr><td>Reserve Book Room - 24 Hour/1 Day Item</td><td>RBR24H1DItem</td></tr>
+            <tr><td>Reserve Book Room - 2 Day Item</td><td>RBR2DItem</td></tr>
+            <tr><td>Reserve Book Room - 3 Day Item</td><td>RBR3DItem</td></tr>
+            <tr><td>Reserve Book Room - 7 Day Item</td><td>RBR7DItem</td></tr>
+        </table>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const hourglass = document.getElementById("hourglass");
+            hourglass.style.display = "none";
+        });
+
+        function addCourseRow() {
+            const courseFields = document.getElementById("courseFields");
+            const addMoreButton = document.querySelector(".addMoreButton");
+
+            // Remove the Add More button from the last row
+            if (addMoreButton) {
+                addMoreButton.parentElement.insertAdjacentHTML('beforeend', '<div class="buttonPlaceholder"></div>');
+                addMoreButton.remove();
+            }
+
+            const newCourseRow = document.createElement("div");
+            newCourseRow.classList.add("courseRow");
+
+            newCourseRow.innerHTML = `
+                <div class="courseField">
+                    <label for="courseNumber">Course Number</label>
+                    <input type="text" name="courseNumber" required>
+                </div>
+                <div class="courseField">
+                    <label for="courseInstructor">Course Instructor</label>
+                    <input type="text" name="courseInstructor" required>
+                </div>
+                <div class="courseField">
+                    <label for="courseSemester">Course Semester</label>
+                    <input type="text" name="courseSemester" required>
+                </div>
+                <div class="courseField">
+                    <label for="courseCitations">Course Citations</label>
+                    <textarea name="courseCitations" rows="5" required></textarea>
+                </div>
+                <button type="button" class="addMoreButton" onclick="addCourseRow()">Add More</button>
+            `;
+
+            courseFields.appendChild(newCourseRow);
+        }
+    </script>
+</body>
+</html>

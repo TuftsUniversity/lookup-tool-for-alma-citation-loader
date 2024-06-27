@@ -1,0 +1,11 @@
+{
+  "name": "excel-upload-api-query",
+  "version": "1.0.0",
+  "description": "Upload Excel and query API",
+  "main": "app.js",
+  "dependencies": {
+    "xlsx": "^0.17.0",
+	"exceljs": "^4.4.0"
+	
+  }
+}
