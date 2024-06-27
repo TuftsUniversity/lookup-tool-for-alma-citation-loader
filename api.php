@@ -28,6 +28,22 @@ ini_set('max_execution_time', 1000);
         $result = $apiResult;
     }
 	
+	  else{
+
+        $result[] = [
+            'Title' => 'No results for ' . $record['Title'] ?? '',
+            'Author' => 'No results for ' . $record['Author'] ?? '',
+            'Contributor' => 'No results for ' . $record['Contributor'] ?? '',
+            'Year' => 'No results for ' .  urlencode($record['Year'] ?? ''),
+            'Course Code' => urlencode($record['Course Number'] ?? ''),
+            'Format' => 'N/A'
+        ];
+        
+
+
+
+    }
+	
 	echo json_encode($result);
     exit;
 	
@@ -279,7 +295,7 @@ function searchPrimoApi($row, $apiKey, $apiKeyCourses, $apiBib) {
                
             }
             
-            if (isset($doc['delivery']['link'][0]['linkURL'])) {
+            if ($json['info']["totalResultsPC"] != "0" || $json['info']["totalResultsPC"] > 0) {
 				$delivery_category_array = $doc['delivery']['deliveryCategory'];
 				$e_mms_id = "";
 				//if (count($delivery_category_array) > 1){
@@ -309,7 +325,6 @@ function searchPrimoApi($row, $apiKey, $apiKeyCourses, $apiBib) {
                     'Year' => $doc['pnx']['addata']['date'][0] ?? '',
                     'MMS ID' => $e_mms_id ?? '',
                     'ISBN' => $doc['pnx']['addata']['isbn'][0] ?? '',
-                    'URL' => json_encode($doc['delivery']['link'][0]['linkURL']) ?? '',
                     'Version' => $doc['pnx']['display']['version'][0] ?? '',
                     'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
                     'Course Section' => $jsonCourse['course'][0]['section'] ?? '',

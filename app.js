@@ -15,49 +15,42 @@ async function handleUpload(event) {
     const progressBar = document.getElementById('progressBar');
     let isValid = true;
 
-	var citationCounter = 0;
+    const rows = document.querySelectorAll('.courseRow');
+    rows.forEach(row => {
+        const courseNumber = row.querySelector('input[name="courseNumber"]').value;
+        const courseInstructor = row.querySelector('input[name="courseInstructor"]').value;
+        const courseSemester = row.querySelector('input[name="courseSemester"]').value;
+        const courseCitations = row.querySelector('textarea[name="courseCitations"]').value;
 
-    // Prepare arrays to hold values for each row
-    const courseNumbers = [];
-    const courseInstructors = [];
-    const courseSemesters = [];
-    const courseCitations = [];
-
-    // Collect the data into arrays
-    formData.forEach((value, key) => {
-        if (key === 'courseNumber') courseNumbers.push(value);
-        if (key === 'courseInstructor') courseInstructors.push(value);
-        if (key === 'courseSemester') courseSemesters.push(value);
-        if (key === 'courseCitations') courseCitations.push(value);
-    });
-	
-	
-
-    // Validate each citation JSON
-    for (let i = 0; i < courseCitations.length; i++) {
-        if (!citationsValid(courseCitations[i])) {
+        if (!citationsValid(courseCitations)) {
             isValid = false;
             alert('Error: citations misformed. Make sure to parse them through https://anystyle.io/');
             return;
         }
-    }
 
+        const parsedCitations = JSON.parse(courseCitations);
+
+        courseData.push({
+            courseNumber,
+            courseInstructor,
+            courseSemester,
+            parsedCitations
+        });
+    });
 
     if (!isValid) return;
 
-    const results = [];
-
+    let results = [];
+    let totalCitations = courseData.reduce((sum, row) => sum + row.parsedCitations.length, 0);
+    let processedCitations = 0;
 
 	
-  for (let i = 0; i < courseNumbers.length; i++) {
-        const citations = JSON.parse(courseCitations[i]);
-		console.log(citations);
-		
-        citations.forEach(citation => {
-			
-			console.log(citation);
-			console.log(typeof citation);
-            let creator = "";
+	courseData.reduce((promise, row) => {
+        return promise.then(() => {
+            return row.parsedCitations.reduce((citationPromise, citation) => {
+                return citationPromise.then(() => {
+                    let creator = "";
+            
 
             if (citation.author != undefined) {
                 creator = citation.author;
@@ -68,69 +61,50 @@ async function handleUpload(event) {
             }
 
             const flattenedCitation = {
-                'Course Number': courseNumbers[i],
-                'Instructor Last Name': courseInstructors[i],
-                'Course Semester': courseSemesters[i],
+                'Course Number': row.courseNumber,
+                'Instructor Last Name': row.courseInstructor,
+                'Course Semester': row.courseSemester,
                 'Title': citation.title || citation['container-title'] || '',
                 'Author': creator ? creator.map(a => `${a.family}, ${a.given}`).join('; ') : '',
                 'Publisher': citation.publisher || '',
                 'Year': citation.issued ? citation.issued['date-parts'][0][0] : ''
             };
-			
-			console.log(flattenedCitation);
-   
-        
-   
-			
-			
- 			// try {
-                fetch('api.php', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify(flattenedCitation)
-				})
-				.then(response => {
-					console.log(response);
-					return response.json()
-				})
-				.then(result => {
-					console.log(result);
-					results.push(result);
-					progressBar.value = ((i + 1 + citationCounter + 1) / (citationCounter)) * 100;
 
-				})
-				.catch(error => {
-				console.error('Error:', error);
-				alert('Error:' + error.message + data);
-				document.getElementById('hourglass').style.display = 'none'; // Hide hourglass
-				});
-
-			citationCounter++;
-              
-                            /*} catch (error) {
+            return fetch('api.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(flattenedCitation)
+            })
+            .then(response => response.json())
+            .then(result => {
+				result.forEach(r => {results.push(r);});
+                
+                processedCitations++;
+                progressBar.value = (processedCitations / totalCitations) * 100;
+            })
+            .catch(error => {
                 console.error('Error:', error);
                 alert('Error: ' + error.message);
-                return;
-            } */
-			});
-			 }
-
-
-    generateExcel(results);
+            }); });
+            }, Promise.resolve());
+        });
+    }, Promise.resolve()).then(() => {
+        generateExcel(results);
+    });
 }
+
 
 
 function generateExcel(results) {
 	
-	let data = [];
-
+		data = [];
         console.log(results);
         
         if (results != null && results != undefined && results.length > 1){
             results.forEach(result => {
-                let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, call_number, barcode, url, description, format;
+                let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, call_number, barcode, description, format;
 
                 if (result['Title']) {
                     title = result['Title'];
@@ -175,9 +149,7 @@ function generateExcel(results) {
                     barcode = JSON.parse(result['Barcode']);
                 }
                 
-                if(result['URL']){
-                    url = JSON.parse(result['URL']);
-                }
+              
                 if (result['Description']){
                     description = JSON.parse(result['Description']);
                 } 
@@ -198,8 +170,7 @@ function generateExcel(results) {
                     'Course Code': course_code,
                     'Course Section': course_section,
                     'Format': format,
-                    'Call Number': call_number,
-                    'URL': url,     
+                    'Call Number': call_number,   
                     'Barcode': barcode,
                     'Description': description,
                     'Call Number': call_number,
@@ -223,8 +194,7 @@ function generateExcel(results) {
                         'Course Code': "ERROR",
                         'Course Section': "ERROR",
                         'Format': "ERROR",
-                        'Call Number': "ERROR",
-                        'URL': "ERROR",     
+                        'Call Number': "ERROR",    
                         'Barcode': "ERROR",
                         'Description': "ERROR",
                         'Call Number': "ERROR",
@@ -238,7 +208,7 @@ function generateExcel(results) {
             });
         } else {
             console.log(JSON.stringify(results));
-            let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, call_number, barcode, url, description, format;
+            let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, call_number, barcode, description, format;
 
             if (results['Title']) {
                 title = results['Title'];
@@ -283,9 +253,6 @@ function generateExcel(results) {
                 barcode = JSON.parse(results['Barcode']);
             }
 
-            if(results['URL']){
-                url = JSON.parse(results['URL']);
-            }
             
             if (results['Description']){
                 description = JSON.parse(results['Description']);
@@ -308,7 +275,6 @@ function generateExcel(results) {
                 'Course Section': course_section,
                 'Format': format,
                 'Call Number': call_number,
-                'URL': url,
                 'Barcode': barcode,
                 'Description': description,
                 'Citation Type': '',
@@ -331,8 +297,7 @@ function generateExcel(results) {
                     'Course Code': "ERROR",
                     'Course Section': "ERROR",
                     'Format': "ERROR",
-                    'Call Number': "ERROR",
-                    'URL': "ERROR",     
+                    'Call Number': "ERROR", 
                     'Barcode': "ERROR",
                     'Description': "ERROR",
                     'Call Number': "ERROR",
