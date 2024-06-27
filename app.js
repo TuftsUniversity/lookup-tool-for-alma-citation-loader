@@ -1,5 +1,3 @@
-document.getElementById('uploadForm').addEventListener('submit', handleUpload);
-
 function citationsValid(citations) {
     try {
         JSON.parse(citations);
@@ -9,12 +7,15 @@ function citationsValid(citations) {
     return true;
 }
 
-function handleUpload(event) {
+async function handleUpload(event) {
     event.preventDefault();
     const form = event.target;
     const formData = new FormData(form);
-    var data = [];
+    const courseData = [];
+    const progressBar = document.getElementById('progressBar');
     let isValid = true;
+
+	var citationCounter = 0;
 
     // Prepare arrays to hold values for each row
     const courseNumbers = [];
@@ -29,6 +30,8 @@ function handleUpload(event) {
         if (key === 'courseSemester') courseSemesters.push(value);
         if (key === 'courseCitations') courseCitations.push(value);
     });
+	
+	
 
     // Validate each citation JSON
     for (let i = 0; i < courseCitations.length; i++) {
@@ -39,13 +42,21 @@ function handleUpload(event) {
         }
     }
 
-    if (!isValid) return;
-	
-    // Process each row of data
-    for (let i = 0; i < courseNumbers.length; i++) {
-        const citations = JSON.parse(courseCitations[i]);
 
+    if (!isValid) return;
+
+    const results = [];
+
+
+	
+  for (let i = 0; i < courseNumbers.length; i++) {
+        const citations = JSON.parse(courseCitations[i]);
+		console.log(citations);
+		
         citations.forEach(citation => {
+			
+			console.log(citation);
+			console.log(typeof citation);
             let creator = "";
 
             if (citation.author != undefined) {
@@ -65,29 +76,55 @@ function handleUpload(event) {
                 'Publisher': citation.publisher || '',
                 'Year': citation.issued ? citation.issued['date-parts'][0][0] : ''
             };
-            data.push(flattenedCitation);
-        });
-    }
+			
+			console.log(flattenedCitation);
+   
+        
+   
+			
+			
+ 			// try {
+                fetch('api.php', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(flattenedCitation)
+				})
+				.then(response => {
+					console.log(response);
+					return response.json()
+				})
+				.then(result => {
+					console.log(result);
+					results.push(result);
+					progressBar.value = ((i + 1 + citationCounter + 1) / (citationCounter)) * 100;
 
-    console.log(JSON.stringify(data));
-    sendToServer(data);
-    //updateProgressBar();
+				})
+				.catch(error => {
+				console.error('Error:', error);
+				alert('Error:' + error.message + data);
+				document.getElementById('hourglass').style.display = 'none'; // Hide hourglass
+				});
+
+			citationCounter++;
+              
+                            /*} catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+                return;
+            } */
+			});
+			 }
+
+
+    generateExcel(results);
 }
 
 
-function sendToServer(data) {
-    document.getElementById('hourglass').style.display = 'block'; // Show hourglass
-
-    fetch('api.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(results => {
-        let data = [];
+function generateExcel(results) {
+	
+	let data = [];
 
         console.log(results);
         
@@ -201,7 +238,7 @@ function sendToServer(data) {
             });
         } else {
             console.log(JSON.stringify(results));
-            let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, call_number, barcode, url, description, format;
+            let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, call_number, barcode, url, description, format;
 
             if (results['Title']) {
                 title = results['Title'];
@@ -306,30 +343,18 @@ function sendToServer(data) {
                 data.push(row);
             }
         }
-        
-        // Create a new workbook and a worksheet
-        const ws = XLSX.utils.json_to_sheet(data, {cellText: true});
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Results');
+    const ws = XLSX.utils.json_to_sheet(results, {cellText: true});
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Results');
 
-        // Set the format of the barcode column to text explicitly
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-            const cell = ws[XLSX.utils.encode_cell({r: R, c: 13})]; // Column J is index 9
-            if (cell && cell.v) {
-                cell.t = 's'; // Set cell type to string
-                cell.z = '@'; // Set cell format to text
-            }
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        const cell = ws[XLSX.utils.encode_cell({r: R, c: 13})];
+        if (cell && cell.v) {
+            cell.t = 's'; // Set cell type to string
+            cell.z = '@'; // Set cell format to text
         }
+    }
 
-        XLSX.writeFile(wb, 'output.xlsx');
-
-        //document.getElementById('downloadBtn').style.display = 'block';
-        document.getElementById('hourglass').style.display = 'none'; // Hide hourglass
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error:' + error.message + data);
-        document.getElementById('hourglass').style.display = 'none'; // Hide hourglass
-    });
+    XLSX.writeFile(wb, 'output.xlsx');
 }

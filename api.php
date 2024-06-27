@@ -1,34 +1,12 @@
-
 <?php
 header('Content-Type: application/json');
+header('Cache-Control: no-cache'); // Ensure that the response is not cached
 
 ini_set('max_execution_time', 1000);
 
-$input = file_get_contents('php://input');
-$data = json_decode($input, true);
-
-if (json_last_error() !== JSON_ERROR_NONE) {
-    echo json_encode(['error' => 'Invalid JSON input']);
-    error_log('JSON decode error: ' . json_last_error_msg());
-    exit;
-}
-
-if (empty($data)) {
-    echo json_encode(['error' => 'Empty input data']);
-    error_log('Empty input data');
-    exit;
-};
-
-// Function to send the progress to the client
-/* function send_progress($progress) {
-    return json_encode(['percentage' => $progress]);
-    ob_flush();
-    flush();
-} */
-
-/* if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+//if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = file_get_contents('php://input');
-    $data = json_decode($input, true);
+    $record = json_decode($input, true);
 
     if (json_last_error() !== JSON_ERROR_NONE) {
         echo json_encode(['error' => 'Invalid JSON input']);
@@ -36,40 +14,25 @@ if (empty($data)) {
         exit;
     }
 
-    if (empty($data)) {
+    if (empty($record)) {
         echo json_encode(['error' => 'Empty input data']);
         error_log('Empty input data');
         exit;
-    } */
-
-    // Initialize or reset the progress session variable
-  /*   $_SESSION['progress'] = 0;
-    $totalRecords = count($data);
-    $processedRecords = 0; */
-
-    $results = [];
-
-
-    // Send initial progress
-    //send_progress($_SESSION['progress']);
-
- $apiKeyPrimo = '***REMOVED***'; 
-			$apiKeyCourses = '***REMOVED***';
-			$apiBib = "***REMOVED***";
-		
-			
-        
-    // Send final progress
-    //send_progress(100);
-
-    // Once processing is complete, send the final results
- 
-  
-foreach ($data as $record) {
-    $apiResult = searchPrimoApi($record, $apiKeyPrimo, $apiKeyCourses, $apiBib);
-    if (!empty($apiResult)) {
-        $results = array_merge($results, $apiResult);
     }
+	$apiKeyPrimo = '***REMOVED***'; 
+	$apiKeyCourses = '***REMOVED***';
+	$apiBib = "***REMOVED***";
+
+	$apiResult = searchPrimoApi($record, $apiKeyPrimo, $apiKeyCourses, $apiBib);
+    if (!empty($apiResult)) {
+        $result = $apiResult;
+    }
+	
+	echo json_encode($result);
+    exit;
+	
+	
+/* }
 
     else{
 
@@ -81,14 +44,13 @@ foreach ($data as $record) {
             'Course Code' => urlencode($record['Course Number'] ?? ''),
             'Format' => 'N/A'
         ];
-        $results = array_merge($results, $result);
+    // Process the record (replace with actual processing logic)
+    
 
+    echo json_encode($result);
+    exit;
+} */
 
-
-    }
-}
-
-echo json_encode($results);
 
 
 function searchPrimoApi($row, $apiKey, $apiKeyCourses, $apiBib) {
