@@ -15,6 +15,7 @@ async function handleUpload(event) {
     const progressBar = document.getElementById('progressBar');
     let isValid = true;
 
+	var totalCitations = 0;
     const rows = document.querySelectorAll('.courseRow');
     rows.forEach(row => {
         const courseNumber = row.querySelector('input[name="courseNumber"]').value;
@@ -30,28 +31,34 @@ async function handleUpload(event) {
 
         const parsedCitations = JSON.parse(courseCitations);
 
-        courseData.push({
+		parsedCitations.forEach(citation => {
+			totalCitations++;
+			courseData.push({
             courseNumber,
             courseInstructor,
             courseSemester,
-            parsedCitations
+            citation
         });
+			
+			
+		});
+        
     });
 
     if (!isValid) return;
 
     let results = [];
-    let totalCitations = courseData.reduce((sum, row) => sum + row.parsedCitations.length, 0);
+  
     let processedCitations = 0;
 
 	
-	courseData.reduce((promise, row) => {
+	return courseData.reduce((promise, row) => {
         return promise.then(() => {
-            return row.parsedCitations.reduce((citationPromise, citation) => {
-                return citationPromise.then(() => {
+/*             return row.parsedCitations.reduce((citationPromise, citation) => { */
+                return promise.then(() => {
                     let creator = "";
             
-
+			citation = row.citation;
             if (citation.author != undefined) {
                 creator = citation.author;
             }
@@ -88,7 +95,7 @@ async function handleUpload(event) {
                 console.error('Error:', error);
                 alert('Error: ' + error.message);
             }); });
-            }, Promise.resolve());
+/*             }, Promise.resolve()); */
         });
     }, Promise.resolve()).then(() => {
         generateExcel(results);
