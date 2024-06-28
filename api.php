@@ -19,9 +19,9 @@ ini_set('max_execution_time', 1000);
         error_log('Empty input data');
         exit;
     }
-	$apiKeyPrimo = 'l8xxecdeb5501901468b9cb2880ff16a3be6'; 
-	$apiKeyCourses = 'l7xxde379ecb50e14de0959be6c41c1f6888';
-	$apiBib = "l8xxa16e86330d384b0c9171da72a6536dc8";
+	$apiKeyPrimo = 'ENTER_API_KEY_HERE'; 
+	$apiKeyCourses = 'ENTER_API_KEY_HERE';
+	$apiBib = "ENTER_API_KEY_HERE";
 
 	$apiResult = searchPrimoApi($record, $apiKeyPrimo, $apiKeyCourses, $apiBib);
     if (!empty($apiResult)) {
