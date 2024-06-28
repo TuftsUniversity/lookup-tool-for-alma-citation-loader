@@ -19,9 +19,9 @@ ini_set('max_execution_time', 1000);
         error_log('Empty input data');
         exit;
     }
-	$apiKeyPrimo = '***REMOVED***'; 
-	$apiKeyCourses = '***REMOVED***';
-	$apiBib = "***REMOVED***";
+	$apiKeyPrimo = 'ENTER_API_KEY_HERE'; 
+	$apiKeyCourses = 'ENTER_API_KEY_HERE';
+	$apiBib = "ENTER_API_KEY_HERE";
 
 	$apiResult = searchPrimoApi($record, $apiKeyPrimo, $apiKeyCourses, $apiBib);
     if (!empty($apiResult)) {
