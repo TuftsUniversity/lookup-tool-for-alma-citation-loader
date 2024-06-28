@@ -37,7 +37,9 @@
                         <label for="courseCitations">Course Citations</label>
                         <textarea id="citations" name="courseCitations" rows="5" required></textarea>
                     </div>
-                    <button type="button" class="addMoreButton" onclick="addCourseRow()">Add More</button>
+                    <div class="buttonContainer">
+                        <button type="button" class="addMoreButton" onclick="addCourseRow()">Add More</button>
+                    </div>
                 </div>
             </div>
             <button type="submit" id="submitButton">Submit</button>
@@ -76,8 +78,7 @@
 
             // Remove the Add More button from the last row
             if (addMoreButton) {
-                addMoreButton.parentElement.insertAdjacentHTML('beforeend', '<div class="buttonPlaceholder"></div>');
-                addMoreButton.remove();
+                addMoreButton.parentElement.innerHTML = '<div class="buttonPlaceholder"></div>';
             }
 
             const newCourseRow = document.createElement("div");
@@ -100,7 +101,9 @@
                     <label for="courseCitations">Course Citations</label>
                     <textarea name="courseCitations" rows="5" required></textarea>
                 </div>
-                <button type="button" class="addMoreButton" onclick="addCourseRow()">Add More</button>
+                <div class="buttonContainer">
+                    <button type="button" class="addMoreButton" onclick="addCourseRow()">Add More</button>
+                </div>
             `;
 
             courseFields.appendChild(newCourseRow);
