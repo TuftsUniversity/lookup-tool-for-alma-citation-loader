@@ -4,72 +4,42 @@ header('Cache-Control: no-cache'); // Ensure that the response is not cached
 
 ini_set('max_execution_time', 1000);
 
-//if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $input = file_get_contents('php://input');
-    $record = json_decode($input, true);
+$input = file_get_contents('php://input');
+$record = json_decode($input, true);
 
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        echo json_encode(['error' => 'Invalid JSON input']);
-        error_log('JSON decode error: ' . json_last_error_msg());
-        exit;
-    }
-
-    if (empty($record)) {
-        echo json_encode(['error' => 'Empty input data']);
-        error_log('Empty input data');
-        exit;
-    }
-	$apiKeyPrimo = 'ENTER_API_KEY_HERE'; 
-	$apiKeyCourses = 'ENTER_API_KEY_HERE';
-	$apiBib = "ENTER_API_KEY_HERE";
-
-	$apiResult = searchPrimoApi($record, $apiKeyPrimo, $apiKeyCourses, $apiBib);
-    if (!empty($apiResult)) {
-        $result = $apiResult;
-    }
-	
-	  else{
-
-        $result[] = [
-            'Title' => 'No results for ' . $record['Title'] ?? '',
-            'Author' => 'No results for ' . $record['Author'] ?? '',
-            'Contributor' => 'No results for ' . $record['Contributor'] ?? '',
-            'Year' => 'No results for ' .  urlencode($record['Year'] ?? ''),
-            'Course Code' => urlencode($record['Course Number'] ?? ''),
-            'Format' => 'N/A'
-        ];
-        
-
-
-
-    }
-	
-	echo json_encode($result);
+if (json_last_error() !== JSON_ERROR_NONE) {
+    echo json_encode(['error' => 'Invalid JSON input']);
+    error_log('JSON decode error: ' . json_last_error_msg());
     exit;
-	
-	
-/* }
+}
 
-    else{
-
-        $result[] = [
-            'Title' => 'No results for ' . $record['Title'] ?? '',
-            'Author' => 'No results for ' . $record['Author'] ?? '',
-            'Contributor' => 'No results for ' . $record['Contributor'] ?? '',
-            'Year' => 'No results for ' .  urlencode($record['Year'] ?? ''),
-            'Course Code' => urlencode($record['Course Number'] ?? ''),
-            'Format' => 'N/A'
-        ];
-    // Process the record (replace with actual processing logic)
-    
-
-    echo json_encode($result);
+if (empty($record)) {
+    echo json_encode(['error' => 'Empty input data']);
+    error_log('Empty input data');
     exit;
-} */
+}
 
+$apiKeyCourses = '***REMOVED***';
+$apiBib = "***REMOVED***";
 
+$apiResult = searchAlmaSruApi($record, $apiKeyCourses, $apiBib);
+if (!empty($apiResult)) {
+    $result = $apiResult;
+} else {
+    $result[] = [
+        'Title' => 'No results for ' . ($record['Title'] ?? ''),
+        'Author' => 'No results for ' . ($record['Author'] ?? ''),
+        'Contributor' => 'No results for ' . ($record['Contributor'] ?? ''),
+        'Year' => 'No results for ' . urlencode($record['Year'] ?? ''),
+        'Course Code' => urlencode($record['Course Number'] ?? ''),
+        'Format' => 'N/A'
+    ];
+}
 
-function searchPrimoApi($row, $apiKey, $apiKeyCourses, $apiBib) {
+echo json_encode($result);
+exit;
+
+function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
     $title = $row['Title'] ?? '';
     $author = $row['Author'] ?? '';
     $contributor = $row['Contributor'] ?? '';
@@ -78,318 +48,146 @@ function searchPrimoApi($row, $apiKey, $apiKeyCourses, $apiBib) {
     $course_number = urlencode($row['Course Number'] ?? '');
     $course_semester = urlencode($row['Course Semester'] ?? '');
     $instructor = urlencode($row['Instructor Last Name'] ?? '');
-    
-   $query = "https://api-na.hosted.exlibrisgroup.com/primo/v1/search?q=";
-    
-    if (!empty($title)) {
-        $title =  preg_replace('/([^\:]+).*/', '$1', $title);
-        //$title = preg_replace('/\!\@\#\$\%\^\&\*\(\)\_\+\-\=\{\}\\\<\>\?\~\'/', ' ', $title);
-        $title =  preg_replace('/\s{2,}/', ' ', $title);
 
-        $query .= "title,contains," . urlencode($title);
+    $query = "https://tufts.alma.exlibrisgroup.com/view/sru/01TUN_INST?version=1.2&operation=searchRetrieve&recordSchema=marcxml";
+
+    if (!empty($title)) {
+        $title = preg_replace('/([^\:]+).*/', '$1', $title);
+        $title = preg_replace('/\s{2,}/', ' ', $title);
+        $query .= "&query=alma.title=" . urlencode($title);
     }
     if (!empty($author)) {
-        if(strpos($author, ';') !== false){
-            $pattern = '/^([^;]+).+?;.+?$/i';
+        if (strpos($author, 'and') !== false) {
+            $pattern = '/^([^,]+).+?and.+?$/i';
             $replacement = '$1';
             $author = preg_replace($pattern, $replacement, $author);
-
         }
-        if(strpos($contributor, 'trans.') !== false || strpos($contributor, 'ed.') !== false || strpos($contributor, 'eds.') !== false ){
+        if (strpos($contributor, 'trans.') !== false || strpos($contributor, 'ed.') !== false || strpos($contributor, 'eds.') !== false) {
             $pattern = '/(ed.\s*|trans\.\s*)(.+)/i';
             $replacement = '$2';
             $author = preg_replace($pattern, $replacement, $author);
-
         }
-        if (strpos($author, ',') !== false){
-
-        
-            
+        if (strpos($author, ',') !== false) {
             $pattern = '/^([^,]+,\s*[^,]+$).*/i';
             $replacement = '${1}';
-            $author =  preg_replace($pattern, $replacement, $author);
+            $author = preg_replace($pattern, $replacement, $author);
             $author = implode(' ', array_reverse(preg_split('/,\s*/', $author)));
         }
-        $query .= ",AND;creator,contains," . urlencode($author);
+        $query .= "%20AND%20alma.creator=" . urlencode($author);
     }
     if (!empty($contributor)) {
-        if(strpos($contributor, 'and') !== false){
+        if (strpos($contributor, 'and') !== false) {
             $pattern = '/^([^,]+).+?and.+?$/i';
             $replacement = '$1';
             $contributor = preg_replace($pattern, $replacement, $contributor);
-
         }
-        if(strpos($contributor, 'trans.') !== false || strpos($contributor, 'ed.') !== false || strpos($contributor, 'eds.') !== false ){
+        if (strpos($contributor, 'trans.') !== false || strpos($contributor, 'ed.') !== false || strpos($contributor, 'eds.') !== false) {
             $pattern = '/(ed.\s*|trans\.\s*)(.+)/i';
             $replacement = '$2';
             $contributor = preg_replace($pattern, $replacement, $contributor);
-
         }
         if (strpos($contributor, ',') !== false) {
             $pattern = '/([^,]+,\s*[^,]+)(.*)/i';
             $replacement = '${1}';
-            $contributor =  preg_replace($pattern, $replacement, $contributor);
+            $contributor = preg_replace($pattern, $replacement, $contributor);
             $contributor = implode(' ', array_reverse(preg_split('/,\s*/', $contributor)));
         }
-        $query .= ",AND;contributor,contains," . urlencode($contributor);
+        $query .= "%20AND%20alma.contributor=" . urlencode($contributor);
     }
     if (!empty($year)) {
-        $query .= ",AND;cdate,contains," . $year;
+        $query .= "%20AND%20alma.date=" . $year;
     }
-    $query .= "&apikey=$apiKey&vid=01TUN_INST:01TUN&lang=en&tab=Everything&scope=MyInst_and_CI&format=json";
 
     $response = file_get_contents($query);
-    $json = json_decode($response, true);
+    $xml = simplexml_load_string($response);
 
     $results = [];
-    
+
     $courseURL = "https://api-na.hosted.exlibrisgroup.com/almaws/v1/courses?";
-    
+
     if (!empty($course_number) && !empty($instructor) && !empty($course_semester)) {
         $request_url = $courseURL . "apikey=" . $apiKeyCourses . "&q=name~" . $course_semester . "-" . $course_number . "%20AND%20instructors~" . $instructor . "&format=json";
         $responseCourse = file_get_contents($request_url);
         $jsonCourse = json_decode($responseCourse, true);
-		
-		
-    
-    
-    if (isset($json['docs']) && count($json['docs']) > 0) {
-      $real_results = false;
-        $mms_found = false;
-        foreach ($json['docs'] as $doc) {
-			if($doc['context'] == "PC"){
-					continue;
-			}
-            if(!(isset($doc['pnx']['display']['mms']))){
-                
-                $mms_found = false;
-                continue;
-           
-            }
+    }
 
-            else {
+    if ($xml->records->record->count() > 0) {
+        foreach ($xml->records->record as $record) {
+            if ($record->xpath("//datafield[@tag='AVA']")->count() > 0) {
+                $phys_mms_id = (string)$record->xpath("//controlfield[@tag='001']")[0];
 
-                
-                $mms_found = true;
-            if (isset($doc['delivery']['bestlocation']['ilsApiId'])) {
-                $phys_mms_id = $doc['delivery']['bestlocation']['ilsApiId'];
-				$phys_mms_id = trim($phys_mms_id);
                 $itemQuery = "https://api-na.hosted.exlibrisgroup.com/almaws/v1/bibs/$phys_mms_id/holdings/ALL/items?apikey=$apiBib&format=json";
                 $responseItems = file_get_contents($itemQuery);
                 $items = json_decode($responseItems, true);
-                
+
                 if ((int)$items['total_record_count'] > 0) {
-                    foreach ($items as $item1) {
-                        if (is_array($item1)){
-                        foreach ($item1 as $item) {
-                            $real_results = true;
-                            $results[] = [
-                                'Title' => $doc['pnx']['display']['title'][0] ?? '',
-                                'Author' => $doc['pnx']['addata']['au'][0] ?? '',
-                                'Contributor' => $doc['pnx']['addata']['addau'][0] ?? '',
-                                'Publisher' => $doc['pnx']['display']['publisher'][0] ?? '',
-                                'Year' => $doc['pnx']['addata']['date'][0] ?? '',
-                                'MMS ID' => $phys_mms_id  ?? '',
-                                'ISBN' => $doc['pnx']['addata']['isbn'][0] ?? '',
-                                'Version' => $doc['pnx']['display']['version'][0] ?? '',
-                                'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
-                                'Course Section' => $jsonCourse['course'][0]['section'] ?? '',
-                                'Call Number' => $item['holding_data']['permanent_call_number'] ?? '',
-                                'Barcode' => $item['item_data']['barcode'] ?? '',
-                                'Description' => json_encode($item['item_data']['description'], true) ?? '',
-                                'Format' => 'Physical'
-                            ];
-                        }
+                    foreach ($items['item'] as $item) {
+                        $results[] = [
+                            'Title' => (string)$record->xpath("//datafield[@tag='245']/subfield[@code='a']")[0],
+                            'Author' => (string)$record->xpath("//datafield[@tag='100']/subfield[@code='a']")[0],
+                            'Publisher' => (string)$record->xpath("//datafield[@tag='264']/subfield[@code='b']")[0],
+                            'Year' => (string)$record->xpath("//datafield[@tag='264']/subfield[@code='c']")[0],
+                            'MMS ID' => $phys_mms_id,
+                            'ISBN' => (string)$record->xpath("//datafield[@tag='020']/subfield[@code='a']")[0],
+                            'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+                            'Course Section' => $jsonCourse['course'][0]['section'] ?? '',
+                            'Call Number' => $item['holding_data']['permanent_call_number'] ?? '',
+                            'Barcode' => $item['item_data']['barcode'] ?? '',
+                            'Description' => json_encode($item['item_data']['description'], true) ?? '',
+                            'Format' => 'Physical'
+                        ];
 
-                        
-                    }
-
-                    
-                    
-
-  /*                    else{
-                         $results[] = [
-                             'Title' => $doc['pnx']['display']['title'][0] ?? '',
-                             'Author' => $doc['pnx']['addata']['au'][0] ?? '',
-                             'Contributor' => $doc['pnx']['addata']['addau'][0] ?? '',
-                             'Publisher' => $doc['pnx']['display']['publisher'][0] ?? '',
-                             'Year' => $doc['pnx']['addata']['date'][0] ?? '',
-                             'MMS ID' => $doc['pnx']['display']['mms'][0] ?? '',
-                             'ISBN' => $doc['pnx']['addata']['isbn'][0] ?? '',
-                             'Version' => $doc['pnx']['display']['version'][0] ?? '',
-                             'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
-                             'Call Number' => $item1['holding_data']['permanent_call_number'] ?? '',
-                             'Barcode' => $item1['item_data']['barcode'] ?? '',
-                             'Description' => json_encode($item1['item_data']['description'], true) ?? '',
-                             'Format' => 'Physical'
-                         ];
-
-                     }
-                    */                    } 
-                }
-
-/*                 if(isset($doc['pnx']['display']['dedupmemberids'])  && isset($doc['delivery']['bestlocation']) && $doc['delivery']['bestlocation'] != null){
-                    $mms_id = $doc['pnx']['display']['dedupmemberids'][0];
-                    $itemQuery = "https://api-na.hosted.exlibrisgroup.com/almaws/v1/bibs/$mms_id/holdings/ALL/items?apikey=$apiBib&format=json";
-                    $responseItems = file_get_contents($itemQuery);
-
-                    $itemQuery = "https://api-na.hosted.exlibrisgroup.com/almaws/v1/bibs/$mms_id/holdings/ALL/items?apikey=$apiBib&format=json";
-                    $responseItems = file_get_contents($itemQuery);
-                    $items = json_decode($responseItems, true);
-                    
-                    if ((int)$items['total_record_count'] > 0) {
-                        foreach ($items as $item1) {
-                            if (is_array($item1)){
-                            foreach ($item1 as $item) {
-                                $real_results = true;
-                                $results[] = [
-                                    'Title' => $doc['pnx']['display']['title'][0] ?? '',
-                                    'Author' => $doc['pnx']['addata']['au'][0] ?? '',
-                                    'Contributor' => $doc['pnx']['addata']['addau'][0] ?? '',
-                                    'Publisher' => $doc['pnx']['display']['publisher'][0] ?? '',
-                                    'Year' => $doc['pnx']['addata']['date'][0] ?? '',
-                                    'MMS ID' => $doc['pnx']['display']['dedupmemberids'][0] ?? '',
-                                    'ISBN' => $doc['pnx']['addata']['isbn'][0] ?? '',
-                                    'Version' => $doc['pnx']['display']['version'][0] ?? '',
-                                    'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
-                                    'Course Section' => $jsonCourse['course'][0]['section'] ?? '',
-                                    'Call Number' => $item['holding_data']['permanent_call_number'] ?? '',
-                                    'Barcode' => $item['item_data']['barcode'] ?? '',
-                                    'Description' => json_encode($item['item_data']['description'], true) ?? '',
-                                    'Format' => 'Physical'
-                                ];
+                        // Copy the fields that were passed into the input that aren’t used in processing for return
+                        foreach ($row as $key => $value) {
+                            if (!array_key_exists($key, $results[array_key_last($results)])) {
+                                $results[array_key_last($results)][$key] = $value;
                             }
-    
-                            
-                        }
-    
-                        
-                        
-    
-                        // else{
-                        //     $results[] = [
-                        //         'Title' => $doc['pnx']['display']['title'][0] ?? '',
-                        //         'Author' => $doc['pnx']['addata']['au'][0] ?? '',
-                        //         'Contributor' => $doc['pnx']['addata']['addau'][0] ?? '',
-                        //         'Publisher' => $doc['pnx']['display']['publisher'][0] ?? '',
-                        //         'Year' => $doc['pnx']['addata']['date'][0] ?? '',
-                        //         'MMS ID' => $doc['pnx']['display']['mms'][0] ?? '',
-                        //         'ISBN' => $doc['pnx']['addata']['isbn'][0] ?? '',
-                        //         'Version' => $doc['pnx']['display']['version'][0] ?? '',
-                        //         'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
-                        //         'Call Number' => $item1['holding_data']['permanent_call_number'] ?? '',
-                        //         'Barcode' => $item1['item_data']['barcode'] ?? '',
-                        //         'Description' => json_encode($item1['item_data']['description'], true) ?? '',
-                        //         'Format' => 'Physical'
-                        //     ];
-    
-                        // }
                         }
                     }
-
-
-                            
-                } */
-
-               
-               
+                }
             }
-            
-            if ($json['info']["totalResultsPC"] != "0" || $json['info']["totalResultsPC"] > 0) {
-				$delivery_category_array = $doc['delivery']['deliveryCategory'];
-				$e_mms_id = "";
-				//if (count($delivery_category_array) > 1){
-					//if (in_array("Alma-E", $delivery_category_array)){
-				if(isset($doc['pnx']['display']['relation'][0]) && preg_match('/^.+?\$\$Z([0-9]+).+$/', $doc['pnx']['display']['relation'][0]) == 1 && !(in_array('Alma-E', $delivery_category_array))){
-					$e_mms_id = preg_replace('/^.+?\$\$Z([0-9]+).+$/', '$1', $doc['pnx']['display']['relation'][0]);
-				}
-				
-						//else{
-						//	$e_mms_id = "NEED E MMS ID";
-						//}
-					//}
-				//}
-				
-				else {
-					$e_mms_id = $doc['pnx']['display']['mms'][0];	
-				}
-				
-				
-                $real_results = true;
-				$e_mms_id = trim($e_mms_id);
+
+            if ($record->xpath("//datafield[@tag='AVE']")->count() > 0) {
+                $e_mms_id = (string)$record->xpath("//controlfield[@tag='001']")[0];
+
                 $results[] = [
-                    'Title' => $doc['pnx']['display']['title'][0] ?? '',
-                    'Author' => $doc['pnx']['addata']['au'][0] ?? '',
-                    'Contributor' => $doc['pnx']['addata']['addau'][0] ?? '',
-                    'Publisher' => $doc['pnx']['display']['publisher'][0] ?? '',
-                    'Year' => $doc['pnx']['addata']['date'][0] ?? '',
-                    'MMS ID' => $e_mms_id ?? '',
-                    'ISBN' => $doc['pnx']['addata']['isbn'][0] ?? '',
-                    'Version' => $doc['pnx']['display']['version'][0] ?? '',
-                    'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
-                    'Course Section' => $jsonCourse['course'][0]['section'] ?? '',
-                    'Format' => 'Electronic'];
-            }
-           /*  else {
-                $real_results = true;
-                $results[] = [
-                    'Title' => $doc['pnx']['display']['title'][0] ?? '',
-                    'Author' => $doc['pnx']['addata']['au'][0] ?? '',
-                    'Contributor' => $doc['pnx']['addata']['addau'][0] ?? '',
-                    'Publisher' => $doc['pnx']['display']['publisher'][0] ?? '',
-                    'Year' => $doc['pnx']['addata']['date'][0] ?? '',
-                    'MMS ID' => $doc['pnx']['display']['mms'][0] ?? '',
-                    'ISBN' => $doc['pnx']['addata']['isbn'][0] ?? '',
-                    'URL' => json_encode($doc['delivery']['link'][0]['linkURL']) ?? '',
-                    'Version' => $doc['pnx']['display']['version'][0] ?? '',
+                    'Title' => (string)$record->xpath("//datafield[@tag='245']/subfield[@code='a']")[0],
+                    'Author' => (string)$record->xpath("//datafield[@tag='100']/subfield[@code='a']")[0],
+                    'Publisher' => (string)$record->xpath("//datafield[@tag='264']/subfield[@code='b']")[0],
+                    'Year' => (string)$record->xpath("//datafield[@tag='264']/subfield[@code='c']")[0],
+                    'MMS ID' => $e_mms_id,
+                    'ISBN' => (string)$record->xpath("//datafield[@tag='020']/subfield[@code='a']")[0],
                     'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
                     'Course Section' => $jsonCourse['course'][0]['section'] ?? '',
                     'Format' => 'Electronic'
-                ]; */
-            //}
+                ];
+
+                // Copy the fields that were passed into the input that aren’t used in processing for return
+                foreach ($row as $key => $value) {
+                    if (!array_key_exists($key, $results[array_key_last($results)])) {
+                        $results[array_key_last($results)][$key] = $value;
+                    }
+                }
+            }
         }
-            
-
-            
-        }
-
-    if($mms_found == false && $real_results = false){
-            
+    } else {
         $results[] = [
-            'Title' => "No MMS ID for " . $doc['pnx']['display']['title'][0] ?? '',
-            'Author' => "No MMS ID for " . $doc['pnx']['addata']['au'][0] ?? '',
-            'Contributor' => $doc['pnx']['addata']['addau'][0] ?? '',
-            'Publisher' => "No MMS ID for " . $doc['pnx']['display']['publisher'][0] ?? '',
-            'Year' => "No MMS ID for " . $doc['pnx']['addata']['date'][0] ?? '',
-            'MMS ID' => "No MMS ID for " . $doc['pnx']['display']['mms'][0] ?? '',
-            'ISBN' => "No MMS ID for " . $doc['pnx']['addata']['isbn'][0] ?? '',
-            'Version' => "No MMS ID for " . $doc['pnx']['display']['version'][0] ?? '',
-            'Course Code' => "No MMS ID for " . $jsonCourse['course'][0]['code'] ?? '',
-            'Course Section' => $jsonCourse['course'][0]['section'] ?? '',
-            'Format' => "No MMS ID for " . 'Unknown'
-        ];
-        
-        
-    
-    }
-     }
-
-    else {
-        $results[] = [
-            'Title' => 'No results for ' . $title ?? '',
-            'Author' => 'No results for ' . $author ?? '',
-            'Contributor' => 'No results for ' . $contributor ?? '',
-            'Publisher' => 'No results for ' . $publisher ?? '',
-            'Year' => 'No results for ' . $year ?? '',
+            'Title' => 'No results for ' . ($title ?? ''),
+            'Author' => 'No results for ' . ($author ?? ''),
+            'Publisher' => 'No results for ' . ($publisher ?? ''),
+            'Year' => 'No results for ' . ($year ?? ''),
             'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
             'Format' => 'N/A'
         ];
+
+        // Copy the fields that were passed into the input that aren’t used in processing for return
+        foreach ($row as $key => $value) {
+            if (!array_key_exists($key, $results[array_key_last($results)])) {
+                $results[array_key_last($results)][$key] = $value;
+            }
+        }
     }
-	
-	//error_log(print_r($results, true));
 
     return $results;
 }
-}
-
 ?>

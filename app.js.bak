@@ -20,13 +20,12 @@ async function handleUpload() {
             const progressBar = document.getElementById('progressBar');
     		let isValid = true;
 			courseData = [];
-			
+			var totalCitations = 0;
             const workbook = XLSX.read(data, {type: 'binary'});
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const json = XLSX.utils.sheet_to_json(worksheet);
 			console.log(JSON.stringify(json));
-			var totalCitations = json.length;
             json.forEach(row => {
 				console.log(JSON.stringify(row));
             //Author	Contributor	Title	Publisher	Year	Course Number	Instructor Last Name	Course Semester
@@ -61,8 +60,7 @@ async function handleUpload() {
 			for (var k in row){
 				if(!(courseData.hasOwnProperty(k))){
 				if (row.hasOwnProperty(k)) {
-					
-					courseData[k] =row[k];
+					courseData.push({k: row[k]});
 					
 				}
 				}
@@ -70,60 +68,53 @@ async function handleUpload() {
         
 			if (!isValid) return;
 
-    		
-			});
-            row['original_title']= title;
-            row['original_author'] = author;
-            row['original_contributor'] = contributor;
-            row['original_publisher'] = publisher;
-            row['original_year'] = year;
-			let results = [];
-			console.log(JSON.stringify(courseData));
+    		let results = [];
+  
+			
     		let processedCitations = 0;
-			return courseData.reduce((promise, row) => {
-				return promise.then(() => {
-/*             return row.parsedCitations.reduce((citationPromise, citation) => { */
-					return promise.then(() => {
+			return courseData.reduce((promise, row1) => {
+       			return promise.then(() => {
+					
+			
+				const flattenedCitation = {
+                'Course Number': row1.course_number,
+                'Instructor Last Name': row1.instructor,
+                'Course Semester': row1.course_semester,
+                'Title': row1.title || '',
+                'Author': row1.author || '',
+				'Contributor': row1.contributor || '',
+                'Publisher': row1.publisher || '',
+                'Year': row1.year || '',
+              
+                
+                };
 				
-					const flattenedCitation = {
-					'Course Number': row.course_number,
-					'Instructor Last Name': row.instructor,
-					'Course Semester': row.course_semester,
-					'Title': row.title || '',
-					'Author': row.author || '',
-					'Contributor': row.contributor || '',
-					'Publisher': row.publisher || '',
-					'Year': row.year || '',
-				  
+				for (var k in row1){
+				if(!(flattenedCitation.hasOwnProperty(k))){
+				if (row1.hasOwnProperty(k)) {
+					flattenedCitation.push({k: row1[k]});
 					
-					};
-					
-					for (var k in row){
-					if(!(flattenedCitation.hasOwnProperty(k))){
-					if (row.hasOwnProperty(k)) {
-						flattenedCitation[k] =row[k];
-						
-					}
-					}
 				}
-					return fetch('api.php', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify(flattenedCitation)
-				})
-				.then(response => response.json())
-				.then(result => {
-					result.forEach(r => {results.push(r);});
-					
-					processedCitations++;
-					progressBar.value = (processedCitations / totalCitations) * 100;
-				})
+				}
+			}
+				return fetch('api.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(flattenedCitation)
+            })
+            .then(response => response.json())
+            .then(result => {
+				result.forEach(r => {results.push(r);});
+                
+                processedCitations++;
+                progressBar.value = (processedCitations / totalCitations) * 100;
+            })
             .catch(error => {
                 console.error('Error:', error);
                 alert('Error: ' + error.message);
-            }); }); });
+            }); });
 /*             }, Promise.resolve()); */
         
     }, Promise.resolve()).then(() => {
@@ -133,11 +124,11 @@ async function handleUpload() {
 					
             
            
-        
-        
-    }
-		reader.readAsBinaryString(file);
+        });
+        reader.readAsBinaryString(file);
         console.log("test");
+    }
+	
 	}
 	
 	else(alert("no file"));
@@ -149,13 +140,10 @@ function generateExcel(results) {
 		data = [];
         console.log(results);
         
-
         if (results != null && results != undefined && results.length > 1){
             results.forEach(result => {
                 let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, call_number, barcode, description, format;
 
-
-				
                 if (result['Title']) {
                     title = result['Title'];
                 }
@@ -232,7 +220,7 @@ function generateExcel(results) {
 				for (var k in result){
 				if(!(row.hasOwnProperty(k))){
 				if (result.hasOwnProperty(k)) {
-				row[k] =result[k];
+				row.push({k: result[k]});
 					
 				}
 				}
@@ -264,7 +252,7 @@ function generateExcel(results) {
 					for (var k in result){
 				if(!(row.hasOwnProperty(k))){
 				if (result.hasOwnProperty(k)) {
-				row[k] =result[k];
+					row.push({k: result[k]});
 					
 				}
 				}
@@ -352,7 +340,7 @@ function generateExcel(results) {
 			for (var k in results){
 				if(!(row.hasOwnProperty(k))){
 				if (results.hasOwnProperty(k)) {
-				row[k] =results[k];
+					row.push({k: results[k]});
 					
 				}
 				}
@@ -385,7 +373,7 @@ function generateExcel(results) {
 				for (var k in results){
 				if(!(row.hasOwnProperty(k))){
 				if (results.hasOwnProperty(k)) {
-				row[k] =results[k];
+				row.push({k: results[k]});
 					
 				}
 				}
@@ -399,7 +387,7 @@ function generateExcel(results) {
 
     const range = XLSX.utils.decode_range(ws['!ref']);
     for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-        const cell = ws[XLSX.utils.encode_cell({r: R, c: 12})];
+        const cell = ws[XLSX.utils.encode_cell({r: R, c: 13})];
         if (cell && cell.v) {
             cell.t = 's'; // Set cell type to string
             cell.z = '@'; // Set cell format to text
