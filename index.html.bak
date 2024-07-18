@@ -20,11 +20,11 @@
       <label labelfor="fileInput">Upload Excel File</label>
       <input type="file" id="fileInput" accept=".xlsx, .xls">
       <button onclick="handleUpload()">Upload</button>
-
-      <div id="progressContainer">
+        <div id="progressContainer">
             <label for="progressBar">Processing Progress:</label>
             <progress id="progressBar" value="0" max="100"></progress>
         </div>
+      
     <h2>Item Policy Codes for Reserves</h2>
     <table>
         <caption class="vhide">The table shows policy codes for reserves</caption>
