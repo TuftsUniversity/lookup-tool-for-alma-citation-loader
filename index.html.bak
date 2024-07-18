@@ -45,9 +45,6 @@
             <button type="submit" id="submitButton">Submit</button>
         </form>
 
-      <label labelfor="fileInput">Upload Excel File</label>
-      <input type="file" id="fileInput" accept=".xlsx, .xls">
-      <button onclick="handleUpload(event)">Upload</button>
         <div id="progressContainer">
             <label for="progressBar">Processing Progress:</label>
             <progress id="progressBar" value="0" max="100"></progress>
