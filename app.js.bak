@@ -16,16 +16,17 @@ async function handleUpload() {
         const reader = new FileReader();
         reader.onload = function(e) {
             const data = e.target.result;
-			console.log(JSON.stringify(data));
+			
             const progressBar = document.getElementById('progressBar');
     		let isValid = true;
 			courseData = [];
-			var totalCitations = 0;
+			
             const workbook = XLSX.read(data, {type: 'binary'});
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const json = XLSX.utils.sheet_to_json(worksheet);
 			console.log(JSON.stringify(json));
+			var totalCitations = json.length;
             json.forEach(row => {
 				console.log(JSON.stringify(row));
             //Author	Contributor	Title	Publisher	Year	Course Number	Instructor Last Name	Course Semester
@@ -37,6 +38,17 @@ async function handleUpload() {
 			const course_number = row['Course Number'];
 			const course_semester = row['Course Semester'];
 			const instructor = row['Instructor Last Name'];
+			if (row['Format'] != undefined){
+				format = row['Format'];
+			}
+			
+			else if (row['format']){
+				format = row['format'];
+			}
+			
+			else {
+				format = ""
+			}
 			const other_columns = [];
 		    //for (var column in row){
 /* 			if(column != "Author" && column != "Contributor" && column != "Title" && column != "Publisher" && column != "Year" && column != "Course Number" && column != "Course Semester" && column != "Instructor Last Name"){
@@ -60,7 +72,8 @@ async function handleUpload() {
 			for (var k in row){
 				if(!(courseData.hasOwnProperty(k))){
 				if (row.hasOwnProperty(k)) {
-					courseData.push({k: row[k]});
+					
+					courseData[k] =row[k];
 					
 				}
 				}
@@ -68,53 +81,62 @@ async function handleUpload() {
         
 			if (!isValid) return;
 
-    		let results = [];
-  
-			
+    		courseData['original_title']= title;
+            courseData['original_author'] = author;
+            courseData['original_contributor'] = contributor;
+            courseData['original_publisher'] = publisher;
+            courseData['original_year'] = year;
+			});
+            
+			let results = [];
+			console.log(JSON.stringify(courseData));
     		let processedCitations = 0;
-			return courseData.reduce((promise, row1) => {
-       			return promise.then(() => {
-					
-			
-				const flattenedCitation = {
-                'Course Number': row1.course_number,
-                'Instructor Last Name': row1.instructor,
-                'Course Semester': row1.course_semester,
-                'Title': row1.title || '',
-                'Author': row1.author || '',
-				'Contributor': row1.contributor || '',
-                'Publisher': row1.publisher || '',
-                'Year': row1.year || '',
-              
-                
-                };
+			return courseData.reduce((promise, row) => {
+				return promise.then(() => {
+/*             return row.parsedCitations.reduce((citationPromise, citation) => { */
+					return promise.then(() => {
 				
-				for (var k in row1){
-				if(!(flattenedCitation.hasOwnProperty(k))){
-				if (row1.hasOwnProperty(k)) {
-					flattenedCitation.push({k: row1[k]});
+					const flattenedCitation = {
+					'Course Number': row.course_number,
+					'Instructor Last Name': row.instructor,
+					'Course Semester': row.course_semester,
+					'Title': row.title || '',
+					'Author': row.author || '',
+					'Contributor': row.contributor || '',
+					'Publisher': row.publisher || '',
+					'Year': row.year || '',
+					'Format': format || '',
+				  
 					
+					};
+					
+					for (var k in row){
+					if(!(flattenedCitation.hasOwnProperty(k))){
+					if (row.hasOwnProperty(k)) {
+						k = k + " - Input";
+						flattenedCitation[k] =row[k];
+						
+					}
+					}
 				}
-				}
-			}
-				return fetch('api.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(flattenedCitation)
-            })
-            .then(response => response.json())
-            .then(result => {
-				result.forEach(r => {results.push(r);});
-                
-                processedCitations++;
-                progressBar.value = (processedCitations / totalCitations) * 100;
-            })
+					return fetch('api.php', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(flattenedCitation)
+				})
+				.then(response => response.json())
+				.then(result => {
+					result.forEach(r => {results.push(r);});
+					
+					processedCitations++;
+					progressBar.value = (processedCitations / totalCitations) * 100;
+				})
             .catch(error => {
                 console.error('Error:', error);
                 alert('Error: ' + error.message);
-            }); });
+            }); }); });
 /*             }, Promise.resolve()); */
         
     }, Promise.resolve()).then(() => {
@@ -124,11 +146,11 @@ async function handleUpload() {
 					
             
            
-        });
-        reader.readAsBinaryString(file);
-        console.log("test");
+        
+        
     }
-	
+		reader.readAsBinaryString(file);
+        console.log("test");
 	}
 	
 	else(alert("no file"));
@@ -140,10 +162,13 @@ function generateExcel(results) {
 		data = [];
         console.log(results);
         
+
         if (results != null && results != undefined && results.length > 1){
             results.forEach(result => {
-                let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, call_number, barcode, description, format;
+                let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, library, library_location, call_number, barcode, description, format;
 
+
+				
                 if (result['Title']) {
                     title = result['Title'];
                 }
@@ -178,7 +203,16 @@ function generateExcel(results) {
                 if (result['Course Code']){
                     course_code = result['Course Code'];
                 }
+				
+				if (result['Library']){
+					library = result['Library'];
+					
+				}
                 
+				if (result['Location']){
+					library_location = result['Location'];
+					
+				}
                 if (result['Call Number']){
                     call_number = result['Call Number'];
                 }
@@ -192,8 +226,8 @@ function generateExcel(results) {
                     description = JSON.parse(result['Description']);
                 } 
                 
-                if (result['Format']){
-                    format = result['Format'];
+                if (result['Returned Format']){
+                    format = result['Returned Format'];
                 }
 
                 let row = {
@@ -207,7 +241,9 @@ function generateExcel(results) {
                     'Version': version,
                     'Course Code': course_code,
                     'Course Section': course_section,
-                    'Format': format,
+                    'Returned Format': format,
+					'Library': library,
+					'Location': library_location,
                     'Call Number': call_number,   
                     'Barcode': barcode,
                     'Description': description,
@@ -220,7 +256,8 @@ function generateExcel(results) {
 				for (var k in result){
 				if(!(row.hasOwnProperty(k))){
 				if (result.hasOwnProperty(k)) {
-				row.push({k: result[k]});
+					k = k + " - Input";
+				row[k] =result[k];
 					
 				}
 				}
@@ -240,7 +277,9 @@ function generateExcel(results) {
                         'Version': "ERROR",
                         'Course Code': "ERROR",
                         'Course Section': "ERROR",
-                        'Format': "ERROR",
+                        'Returned Format': "ERROR",
+						'Library': "ERROR",
+						'Location': "ERROR",
                         'Call Number': "ERROR",    
                         'Barcode': "ERROR",
                         'Description': "ERROR",
@@ -252,7 +291,8 @@ function generateExcel(results) {
 					for (var k in result){
 				if(!(row.hasOwnProperty(k))){
 				if (result.hasOwnProperty(k)) {
-					row.push({k: result[k]});
+					k = k + " - Input";
+				row[k] =result[k];
 					
 				}
 				}
@@ -263,7 +303,7 @@ function generateExcel(results) {
             });
         } else {
             console.log(JSON.stringify(results));
-            let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, call_number, barcode, description, format;
+            let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, library, library_location, call_number, barcode, description, format;
 
             if (results['Title']) {
                 title = results['Title'];
@@ -301,6 +341,15 @@ function generateExcel(results) {
                 course_code = results['Course Code'];
             }
             
+			if (results['Library']){
+					library = results['Library'];
+					
+			}
+			
+			if (results['Location']){
+				library_location = results['Location'];
+				
+			}
             if (results['Call Number']){
                 call_number = results['Call Number'];
             }
@@ -313,8 +362,8 @@ function generateExcel(results) {
                 description = JSON.parse(results['Description']);
             }
             
-            if (results['Format']){
-                format = results['Format'];
+            if (results['Returned Format']){
+                format = results['Returned Format'];
             }
 
             let row = {
@@ -328,7 +377,10 @@ function generateExcel(results) {
                 'Version': version,
                 'Course Code': course_code,
                 'Course Section': course_section,
-                'Format': format,
+                'Returned Format': format,
+				'Library': library,
+				'Location': library_location,
+                'Call Number': call_number,
                 'Call Number': call_number,
                 'Barcode': barcode,
                 'Description': description,
@@ -340,7 +392,8 @@ function generateExcel(results) {
 			for (var k in results){
 				if(!(row.hasOwnProperty(k))){
 				if (results.hasOwnProperty(k)) {
-					row.push({k: results[k]});
+					k = k + " - Input";
+				row[k] =results[k];
 					
 				}
 				}
@@ -360,7 +413,9 @@ function generateExcel(results) {
                     'Version': "ERROR",
                     'Course Code': "ERROR",
                     'Course Section': "ERROR",
-                    'Format': "ERROR",
+                    'Returned Format': "ERROR",
+					'Library': "ERROR",
+					'Location': "ERROR",
                     'Call Number': "ERROR", 
                     'Barcode': "ERROR",
                     'Description': "ERROR",
@@ -370,10 +425,11 @@ function generateExcel(results) {
                     'Item Policy': ''
                 };
 				
-				for (var k in results){
+			for (var k in results){
 				if(!(row.hasOwnProperty(k))){
 				if (results.hasOwnProperty(k)) {
-				row.push({k: results[k]});
+					k = k + " - Input";
+				row[k] =results[k];
 					
 				}
 				}
@@ -381,13 +437,17 @@ function generateExcel(results) {
                 data.push(row);
             }
         }
+		
+	
+
+
     const ws = XLSX.utils.json_to_sheet(data, {cellText: true});
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Results');
 
     const range = XLSX.utils.decode_range(ws['!ref']);
     for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-        const cell = ws[XLSX.utils.encode_cell({r: R, c: 13})];
+        const cell = ws[XLSX.utils.encode_cell({r: R, c: 14})];
         if (cell && cell.v) {
             cell.t = 's'; // Set cell type to string
             cell.z = '@'; // Set cell format to text

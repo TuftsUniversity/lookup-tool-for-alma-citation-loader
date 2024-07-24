@@ -16,7 +16,7 @@ async function handleUpload() {
         const reader = new FileReader();
         reader.onload = function(e) {
             const data = e.target.result;
-			console.log(JSON.stringify(data));
+			
             const progressBar = document.getElementById('progressBar');
     		let isValid = true;
 			courseData = [];
@@ -38,6 +38,17 @@ async function handleUpload() {
 			const course_number = row['Course Number'];
 			const course_semester = row['Course Semester'];
 			const instructor = row['Instructor Last Name'];
+			if (row['Format'] != undefined){
+				format = row['Format'];
+			}
+			
+			else if (row['format']){
+				format = row['format'];
+			}
+			
+			else {
+				format = ""
+			}
 			const other_columns = [];
 		    //for (var column in row){
 /* 			if(column != "Author" && column != "Contributor" && column != "Title" && column != "Publisher" && column != "Year" && column != "Course Number" && column != "Course Semester" && column != "Instructor Last Name"){
@@ -70,13 +81,13 @@ async function handleUpload() {
         
 			if (!isValid) return;
 
-    		
+    		courseData['original_title']= title;
+            courseData['original_author'] = author;
+            courseData['original_contributor'] = contributor;
+            courseData['original_publisher'] = publisher;
+            courseData['original_year'] = year;
 			});
-            row['original_title']= title;
-            row['original_author'] = author;
-            row['original_contributor'] = contributor;
-            row['original_publisher'] = publisher;
-            row['original_year'] = year;
+            
 			let results = [];
 			console.log(JSON.stringify(courseData));
     		let processedCitations = 0;
@@ -94,6 +105,7 @@ async function handleUpload() {
 					'Contributor': row.contributor || '',
 					'Publisher': row.publisher || '',
 					'Year': row.year || '',
+					'Format': format || '',
 				  
 					
 					};
@@ -101,6 +113,7 @@ async function handleUpload() {
 					for (var k in row){
 					if(!(flattenedCitation.hasOwnProperty(k))){
 					if (row.hasOwnProperty(k)) {
+						k = k + " - Input";
 						flattenedCitation[k] =row[k];
 						
 					}
@@ -152,7 +165,7 @@ function generateExcel(results) {
 
         if (results != null && results != undefined && results.length > 1){
             results.forEach(result => {
-                let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, call_number, barcode, description, format;
+                let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, library, library_location, call_number, barcode, description, format;
 
 
 				
@@ -190,7 +203,16 @@ function generateExcel(results) {
                 if (result['Course Code']){
                     course_code = result['Course Code'];
                 }
+				
+				if (result['Library']){
+					library = result['Library'];
+					
+				}
                 
+				if (result['Location']){
+					library_location = result['Location'];
+					
+				}
                 if (result['Call Number']){
                     call_number = result['Call Number'];
                 }
@@ -204,8 +226,8 @@ function generateExcel(results) {
                     description = JSON.parse(result['Description']);
                 } 
                 
-                if (result['Format']){
-                    format = result['Format'];
+                if (result['Returned Format']){
+                    format = result['Returned Format'];
                 }
 
                 let row = {
@@ -219,7 +241,9 @@ function generateExcel(results) {
                     'Version': version,
                     'Course Code': course_code,
                     'Course Section': course_section,
-                    'Format': format,
+                    'Returned Format': format,
+					'Library': library,
+					'Location': library_location,
                     'Call Number': call_number,   
                     'Barcode': barcode,
                     'Description': description,
@@ -232,6 +256,7 @@ function generateExcel(results) {
 				for (var k in result){
 				if(!(row.hasOwnProperty(k))){
 				if (result.hasOwnProperty(k)) {
+					k = k + " - Input";
 				row[k] =result[k];
 					
 				}
@@ -252,7 +277,9 @@ function generateExcel(results) {
                         'Version': "ERROR",
                         'Course Code': "ERROR",
                         'Course Section': "ERROR",
-                        'Format': "ERROR",
+                        'Returned Format': "ERROR",
+						'Library': "ERROR",
+						'Location': "ERROR",
                         'Call Number': "ERROR",    
                         'Barcode': "ERROR",
                         'Description': "ERROR",
@@ -264,6 +291,7 @@ function generateExcel(results) {
 					for (var k in result){
 				if(!(row.hasOwnProperty(k))){
 				if (result.hasOwnProperty(k)) {
+					k = k + " - Input";
 				row[k] =result[k];
 					
 				}
@@ -275,7 +303,7 @@ function generateExcel(results) {
             });
         } else {
             console.log(JSON.stringify(results));
-            let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, call_number, barcode, description, format;
+            let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, library, library_location, call_number, barcode, description, format;
 
             if (results['Title']) {
                 title = results['Title'];
@@ -313,6 +341,15 @@ function generateExcel(results) {
                 course_code = results['Course Code'];
             }
             
+			if (results['Library']){
+					library = results['Library'];
+					
+			}
+			
+			if (results['Location']){
+				library_location = results['Location'];
+				
+			}
             if (results['Call Number']){
                 call_number = results['Call Number'];
             }
@@ -325,8 +362,8 @@ function generateExcel(results) {
                 description = JSON.parse(results['Description']);
             }
             
-            if (results['Format']){
-                format = results['Format'];
+            if (results['Returned Format']){
+                format = results['Returned Format'];
             }
 
             let row = {
@@ -340,7 +377,9 @@ function generateExcel(results) {
                 'Version': version,
                 'Course Code': course_code,
                 'Course Section': course_section,
-                'Format': format,
+                'Returned Format': format,
+				'Library': library,
+				'Location': library_location,
                 'Call Number': call_number,
                 'Barcode': barcode,
                 'Description': description,
@@ -352,6 +391,7 @@ function generateExcel(results) {
 			for (var k in results){
 				if(!(row.hasOwnProperty(k))){
 				if (results.hasOwnProperty(k)) {
+					k = k + " - Input";
 				row[k] =results[k];
 					
 				}
@@ -372,7 +412,9 @@ function generateExcel(results) {
                     'Version': "ERROR",
                     'Course Code': "ERROR",
                     'Course Section': "ERROR",
-                    'Format': "ERROR",
+                    'Returned Format': "ERROR",
+					'Library': "ERROR",
+					'Location': "ERROR",
                     'Call Number': "ERROR", 
                     'Barcode': "ERROR",
                     'Description': "ERROR",
@@ -382,9 +424,10 @@ function generateExcel(results) {
                     'Item Policy': ''
                 };
 				
-				for (var k in results){
+			for (var k in results){
 				if(!(row.hasOwnProperty(k))){
 				if (results.hasOwnProperty(k)) {
+					k = k + " - Input";
 				row[k] =results[k];
 					
 				}
@@ -393,13 +436,17 @@ function generateExcel(results) {
                 data.push(row);
             }
         }
+		
+	
+
+
     const ws = XLSX.utils.json_to_sheet(data, {cellText: true});
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Results');
 
     const range = XLSX.utils.decode_range(ws['!ref']);
     for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-        const cell = ws[XLSX.utils.encode_cell({r: R, c: 12})];
+        const cell = ws[XLSX.utils.encode_cell({r: R, c: 14})];
         if (cell && cell.v) {
             cell.t = 's'; // Set cell type to string
             cell.z = '@'; // Set cell format to text
