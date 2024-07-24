@@ -92,7 +92,8 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 
         $query .= "&query=alma.title=%22*" . urlencode($title) . "*%22";
-				 
+				 $query .= "&query=alma.title=%22*" . urlencode($title) . "*%22";
+	
     }
 
 	else {

@@ -111,7 +111,7 @@ function generateExcel(results) {
         
         if (results != null && results != undefined && results.length > 1){
             results.forEach(result => {
-                let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, call_number, barcode, description, format;
+                let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, library, library_location, call_number, barcode, description, format;
 
                 if (result['Title']) {
                     title = result['Title'];
@@ -148,6 +148,16 @@ function generateExcel(results) {
                     course_code = result['Course Code'];
                 }
                 
+				if (result['Library']){
+					library = result['Library'];
+					
+				}
+                
+				if (result['Location']){
+					library_location = result['Location'];
+					
+				}
+				
                 if (result['Call Number']){
                     call_number = result['Call Number'];
                 }
@@ -161,8 +171,8 @@ function generateExcel(results) {
                     description = JSON.parse(result['Description']);
                 } 
                 
-                if (result['Format']){
-                    format = result['Format'];
+                if (result['Returned Format']){
+                    format = result['Returned Format'];
                 }
 
                 let row = {
@@ -176,8 +186,10 @@ function generateExcel(results) {
                     'Version': version,
                     'Course Code': course_code,
                     'Course Section': course_section,
-                    'Format': format,
-                    'Call Number': call_number,   
+                    'Returned Format': format,
+					'Library': library,
+					'Location': library_location,                    'Call Number': call_number,   
+					'Call Number': call_number, 
                     'Barcode': barcode,
                     'Description': description,
                     'Call Number': call_number,
@@ -200,8 +212,10 @@ function generateExcel(results) {
                         'Version': "ERROR",
                         'Course Code': "ERROR",
                         'Course Section': "ERROR",
-                        'Format': "ERROR",
-                        'Call Number': "ERROR",    
+                         'Returned Format': "ERROR",
+						'Library': "ERROR",
+						'Location': "ERROR",                        'Call Number': "ERROR",    
+						'Call Number': "ERROR",  
                         'Barcode': "ERROR",
                         'Description': "ERROR",
                         'Call Number': "ERROR",
@@ -215,7 +229,7 @@ function generateExcel(results) {
             });
         } else {
             console.log(JSON.stringify(results));
-            let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, call_number, barcode, description, format;
+            let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, library, library_location, call_number, barcode, description, format;
 
             if (results['Title']) {
                 title = results['Title'];
@@ -252,8 +266,16 @@ function generateExcel(results) {
             if (results['Course Code']){
                 course_code = results['Course Code'];
             }
-            
-            if (results['Call Number']){
+			if (results['Library']){
+					library = results['Library'];
+					
+			}
+			
+			if (results['Location']){
+				library_location = results['Location'];
+				
+			}            
+			if (results['Call Number']){
                 call_number = results['Call Number'];
             }
             if (results['Barcode']){
@@ -265,8 +287,8 @@ function generateExcel(results) {
                 description = JSON.parse(results['Description']);
             }
             
-            if (results['Format']){
-                format = results['Format'];
+            if (results['Returned Format']){
+                format = results['Returned Format'];
             }
 
             let row = {
@@ -280,7 +302,9 @@ function generateExcel(results) {
                 'Version': version,
                 'Course Code': course_code,
                 'Course Section': course_section,
-                'Format': format,
+                              'Returned Format': format,
+				'Library': library,
+				'Location': library_location,
                 'Call Number': call_number,
                 'Barcode': barcode,
                 'Description': description,
@@ -303,7 +327,9 @@ function generateExcel(results) {
                     'Version': "ERROR",
                     'Course Code': "ERROR",
                     'Course Section': "ERROR",
-                    'Format': "ERROR",
+                    'Returned Format': "ERROR",
+					'Library': "ERROR",
+					'Location': "ERROR",
                     'Call Number': "ERROR", 
                     'Barcode': "ERROR",
                     'Description': "ERROR",
@@ -321,7 +347,7 @@ function generateExcel(results) {
 
     const range = XLSX.utils.decode_range(ws['!ref']);
     for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-        const cell = ws[XLSX.utils.encode_cell({r: R, c: 13})];
+        const cell = ws[XLSX.utils.encode_cell({r: R, c: 14})];
         if (cell && cell.v) {
             cell.t = 's'; // Set cell type to string
             cell.z = '@'; // Set cell format to text
