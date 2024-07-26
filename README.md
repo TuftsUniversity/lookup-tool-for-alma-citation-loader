@@ -27,7 +27,7 @@ Make 3 additional columns in the output table : “Course Number”, “Instruct
 Note that for v9, the program will carry over any additional fields you include as well.  
 - Input data dictionary
   - The input sheet gathered from faculty email should have the following columns with the following characteristics
-      - No field is required, but keep in mind fewer pieces of data will return broader , less specific results
+      - Only title is required, but keep in mind fewer pieces of data will return broader , less specific results
   - Author
     - in citation format.  It will be normalized for inclusion in an SRU search parameter 
   - Contributor
