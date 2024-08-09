@@ -53,19 +53,32 @@ if (!empty($apiResult)) {
 
     $result[] = [
 
-        'Title' => 'Wrong format for ' . ($record['Title'] ?? ''),
+        'Title' => 'Wrong format for ' . ($record['Title - Input'] ?? ''),
 
-        'Author' => 'Wrong format for ' . ($record['Author'] ?? ''),
+        'Author' => 'Wrong format for ' . ($record['Author - Input'] ?? ''),
 
-        'Contributor' => 'Wrong format for ' . ($record['Contributor'] ?? ''),
+        'Contributor' => 'Wrong format for ' . ($record['Contributor - Input'] ?? ''),
 
-        'Year' => 'Wrong format for ' . urlencode($record['Year'] ?? ''),
+        'Year' => 'Wrong format for ' . urlencode($record['Year - Input'] ?? ''),
 
-        'Course Code' => urlencode($record['Course Number'] ?? ''),
+        'course_code' => urlencode($record['Course Number - Input'] ?? ''),
 
-        'Format' => 'N/A'
+        'Format' => 'Wrong format for ' . ($record['Format - Input'] ?? ''),
 
     ];
+	
+	    foreach ($row as $key => $value) {
+
+			if (!array_key_exists($key, $results[array_key_last($results)])) {
+
+				$results[array_key_last($results)][$key] = $value;
+
+			}
+
+		}
+
+	
+	
 
 }
 
@@ -79,28 +92,28 @@ exit;
 
 function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
-    $title = $row['Title'] ?? '';
+    $title = $row['Title - Input'] ?? '';
 
-    $author = $row['Author'] ?? '';
+    $author = $row['Author - Input'] ?? '';
 
-    $contributor = $row['Contributor'] ?? '';
+    $contributor = $row['Contributor - Input'] ?? '';
 
-    $publisher = $row['Publisher'] ?? '';
+    $publisher = $row['Publisher - Input'] ?? '';
 
-    $year = urlencode($row['Year'] ?? '');
+    $year = urlencode($row['Year - Input'] ?? '');
 	
 
 		
-	$format = $row['Format'];
+	$format = $row['Format - Input'];
 	
 	
 
 
-    $course_number = urlencode($row['Course Number'] ?? '');
+    $course_number = urlencode($row['Course Number - Input'] ?? '');
 
-    $course_semester = urlencode($row['Course Semester'] ?? '');
+    $course_semester = urlencode($row['Course Semester - Input'] ?? '');
 
-    $instructor = urlencode($row['Instructor Last Name'] ?? '');
+    $instructor = urlencode($row['Instructor Last Name - Input'] ?? '');
 
 
 
@@ -133,7 +146,7 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
     }
 	
 	else {
-		error_log("first else");
+		
 		$results[] = [
 
 			'Title' => 'No results for ' . ($title ?? ''),
@@ -144,16 +157,12 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 			'Year' => 'No results for ' . ($year ?? ''),
 
-			'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+			'course_code' => $jsonCourse['course'][0]['code'] ?? '',
 
 			'Returned Format' => 'N/A'
 
 		];
-
-
-
-		// Copy the fields that were passed into the input that aren’t used in processing for return
-
+		
 		foreach ($row as $key => $value) {
 
 			if (!array_key_exists($key, $results[array_key_last($results)])) {
@@ -163,7 +172,11 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 			}
 
 		}
-		echo json_encode($result);
+
+
+
+
+		echo json_encode($results);
 
 		exit;
 	}
@@ -257,7 +270,7 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 	
 
 
-	error_log($query);
+	
 
 
     $response = file_get_contents($query);
@@ -365,7 +378,7 @@ if (count($records) > 0) {
 						}
 						
 						//foreach($barcode_array as $barcode){
-						error_log(print_r($barcode_array, true));
+						
 						
 						
 					
@@ -400,9 +413,9 @@ if (count($records) > 0) {
 
                             'ISBN' => $xpath->query("//datafield[@tag='020']/subfield[@code='a']")->item(0)->nodeValue,
 
-                            'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+                            'course_code' => $jsonCourse['course'][0]['code'] ?? '',
 
-                            'Course Section' => $jsonCourse['course'][0]['section'] ?? '',
+                            'course_section' => $jsonCourse['course'][0]['section'] ?? '',
 							
 							'Library' => $library ?? '',
 							
@@ -422,15 +435,18 @@ if (count($records) > 0) {
 
                         // Copy the fields that were passed into the input that aren’t used in processing for return
 
-                        foreach ($row as $key => $value) {
+						foreach ($row as $key => $value) {
 
-                            if (!array_key_exists($key, $results[array_key_last($results)])) {
+							if (!array_key_exists($key, $results[array_key_last($results)])) {
 
-                                $results[array_key_last($results)][$key] = $value;
+								$results[array_key_last($results)][$key] = $value;
 
-                            }
+							}
 
-                        }
+						}
+						
+						
+						
 
                     }
 
@@ -490,9 +506,9 @@ if (count($records) > 0) {
 
                     'ISBN' => $xpath->query("//datafield[@tag='020']/subfield[@code='a']")->item(0)->nodeValue,
 
-                    'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+                    'course_code' => $jsonCourse['course'][0]['code'] ?? '',
 
-                    'Course Section' => $jsonCourse['course'][0]['section'] ?? '',
+                    'course_section' => $jsonCourse['course'][0]['section'] ?? '',
 
                     'Returned Format' => 'Electronic'
 
@@ -502,15 +518,15 @@ if (count($records) > 0) {
 
                 // Copy the fields that were passed into the input that aren’t used in processing for return
 
-                foreach ($row as $key => $value) {
+				foreach ($row as $key => $value) {
 
-                    if (!array_key_exists($key, $results[array_key_last($results)])) {
+					if (!array_key_exists($key, $results[array_key_last($results)])) {
 
-                        $results[array_key_last($results)][$key] = $value;
+						$results[array_key_last($results)][$key] = $value;
 
-                    }
+					}
 
-                }
+				}
 
             }
 			
@@ -522,7 +538,7 @@ if (count($records) > 0) {
 
     } else {
 		
-		error_log("last else as if no records returned by query");
+		
 
         $results[] = [
 
@@ -534,7 +550,7 @@ if (count($records) > 0) {
 
             'Year' => 'No results for ' . ($year ?? ''),
 
-            'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+            'course_code' => $jsonCourse['course'][0]['code'] ?? '',
 
             'Returned Format' => 'N/A'
 
@@ -544,15 +560,15 @@ if (count($records) > 0) {
 
         // Copy the fields that were passed into the input that aren’t used in processing for return
 
-        foreach ($row as $key => $value) {
+		foreach ($row as $key => $value) {
 
-            if (!array_key_exists($key, $results[array_key_last($results)])) {
+			if (!array_key_exists($key, $results[array_key_last($results)])) {
 
-                $results[array_key_last($results)][$key] = $value;
+				$results[array_key_last($results)][$key] = $value;
 
-            }
+			}
 
-        }
+		}
 
     }
 	
@@ -567,12 +583,23 @@ if (count($records) > 0) {
 
             'Year' => 'No course for ' . ($year ?? ''),
 
-            'Course Code' =>  $course_number . "-" . $course_semester . "-" . $instructor ?? '',
+            'course_code' =>  $course_number . "-" . $course_semester . "-" . $instructor ?? '',
 
             'Returned Format' => 'N/A'
 
         ];
-	
+		
+		foreach ($row as $key => $value) {
+
+			if (!array_key_exists($key, $results[array_key_last($results)])) {
+
+				$results[array_key_last($results)][$key] = $value;
+
+			}
+
+		}
+
+		
 }
 
 
