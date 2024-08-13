@@ -4,7 +4,7 @@
   "description": "Upload Excel and query API",
   "main": "app.js",
   "dependencies": {
-    "xlsx": "^0.17.0",
+    "xlsx": "^0.20.0",
 	"exceljs": "^4.4.0"
 	
   }
