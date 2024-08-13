@@ -453,8 +453,8 @@ function generateExcel(results) {
                 'Barcode': barcode,
                 'Description': description,
                 'Citation Type': '',
-                'section_info': result['section_info'] || '',
-                'Item Policy': result['item_policy'] || result['Item Policy'] || '' 
+                'section_info': '',
+                'Item Policy': ''
             };
 			
 			for (var k in results){

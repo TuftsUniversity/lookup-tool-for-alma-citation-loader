@@ -10,7 +10,7 @@ function citationsValid(citations) {
 async function handleUpload() {
     const fileInput = document.getElementById('fileInput');
     const file = fileInput.files[0];
-	console.log(file);
+	
 	
     if (file) {
         const reader = new FileReader();
@@ -26,10 +26,23 @@ async function handleUpload() {
             const worksheet = workbook.Sheets[sheetName];
             const json = XLSX.utils.sheet_to_json(worksheet);
 			console.log(JSON.stringify(json));
+            let existingKeys = [];
+
+            // Collect all existing keys
+            json.forEach(row => {
+
+                for (let key in row) {
+                    existingKeys.push(key);
+                }
+            });
+
 			var totalCitations = json.length;
             json.forEach(row => {
+            
+
+            
 				console.log(JSON.stringify(row));
-            //Author	Contributor	Title	Publisher	Year	Course Number	Instructor Last Name	Course Semester
+            
 			const author = row['Author'];
 			const contributor = row['Contributor'];
 			const title = row['Title'];
@@ -40,56 +53,91 @@ async function handleUpload() {
 			const instructor = row['Instructor Last Name'];
 			if (row['Format'] != undefined){
 				format = row['Format'];
+                row['Format - Input'] = row['Format']
+                delete row['Format']
 			}
 			
-			else if (row['format']){
+			else if (row['format'] != undefined){
 				format = row['format'];
+                row['Format - Input'] = row['format']
+                delete row['format']
 			}
 			
 			else {
 				format = ""
 			}
-			const other_columns = [];
-		    //for (var column in row){
-/* 			if(column != "Author" && column != "Contributor" && column != "Title" && column != "Publisher" && column != "Year" && column != "Course Number" && column != "Course Semester" && column != "Instructor Last Name"){
-				other_columns.push({column: row[columm]});
-			}
-			} */
-		    	
-		    
 
-        	courseData.push({
-            author,
-            contributor,
-            title,
-            publisher,
-            year,
-            course_number,
-            course_semester,
-            instructor,
+		    console.log(format);
+            row['Author - Input'] = row['Author']  
+            delete row['Author']
+
+            row['Contributor - Input'] = row['Contributor']  
+            delete row['Contributor']
+
+            row['Title - Input'] = row['Title']  
+            delete row['Title']
+
+            row['Publisher - Input'] = row['Publisher']  
+            delete row['Publisher']
+
+            row['Year - Input'] = row['Year']  
+            delete row['Year']
+
+            row['Course Number - Input'] = row['Course Number']  
+            delete row['Course Number']
+
+            row['Instructor Last Name - Input'] = row['Instructor Last Name']  
+            delete row['Instructor Last Name']
+
+            row['Course Semester - Input'] = row['Course Semester']  
+            delete row['Course Semester']
+
             
-        });
-			for (var k in row){
-				if(!(courseData.hasOwnProperty(k))){
+            
+
+                
+            
+			var c_row = {
+            "Author - Input": author,
+            "Contributor - Input": contributor,
+            "Title - Input": title,
+            "Publisher - Input": publisher,
+            "Year - Input": year,
+            "Course Number - Input": course_number,
+            "Course Semester - Input": course_semester,
+            "Instructor Last Name - Input": instructor,
+            "Format - Input": format
+            
+        };
+        	
+        
+                        // Add any extra columns
+              for (var k in row){
+				
+					  
+			
+				if(!(c_row.hasOwnProperty(k)) || (!(c_row.hasOwnProperty()))){
 				if (row.hasOwnProperty(k)) {
 					
-					courseData[k] =row[k];
+					c_row[k] = row[k];
 					
 				}
 				}
-			}
+		
+			  }
+			courseData.push(c_row);
         
 			if (!isValid) return;
 
-    		courseData['original_title']= title;
+/*     		courseData['original_title']= title;
             courseData['original_author'] = author;
             courseData['original_contributor'] = contributor;
             courseData['original_publisher'] = publisher;
-            courseData['original_year'] = year;
+            courseData['original_year'] = year; */
 			});
             
 			let results = [];
-			console.log(JSON.stringify(courseData));
+			
     		let processedCitations = 0;
 			return courseData.reduce((promise, row) => {
 				return promise.then(() => {
@@ -97,28 +145,42 @@ async function handleUpload() {
 					return promise.then(() => {
 				
 					const flattenedCitation = {
-					'Course Number': row.course_number,
-					'Instructor Last Name': row.instructor,
-					'Course Semester': row.course_semester,
-					'Title': row.title || '',
-					'Author': row.author || '',
-					'Contributor': row.contributor || '',
-					'Publisher': row.publisher || '',
-					'Year': row.year || '',
+					'Course Number - Input': row['Course Number - Input'],
+					'Instructor Last Name - Input': row['Instructor Last Name - Input'],
+					'Course Semester - Input': row['Course Semester - Input'],
+					'Title - Input': row['Title - Input'] || '',
+					'Author - Input': row['Author - Input'] || '',
+					'Contributor - Input': row['Contributor - Input'] || '',
+					'Publisher - Input': row['Publisher - Input'] || '',
+					'Year - Input': row['Year - Input'] || '',
 					'Format': format || '',
 				  
 					
+					
 					};
 					
-					for (var k in row){
-					if(!(flattenedCitation.hasOwnProperty(k))){
-					if (row.hasOwnProperty(k)) {
-						k = k + " - Input";
-						flattenedCitation[k] =row[k];
-						
-					}
-					}
+					
+					                        // Add any extra columns
+											
+			  
+              for (var k in row){
+				
+					  
+			
+				if(!(flattenedCitation.hasOwnProperty(k))){
+				if (row.hasOwnProperty(k)) {
+					
+					flattenedCitation[k] = row[k];
+					
 				}
+				}
+		
+			  }
+			
+			
+					
+                
+					
 					return fetch('api.php', {
 					method: 'POST',
 					headers: {
@@ -128,6 +190,7 @@ async function handleUpload() {
 				})
 				.then(response => response.json())
 				.then(result => {
+					
 					result.forEach(r => {results.push(r);});
 					
 					processedCitations++;
@@ -150,7 +213,7 @@ async function handleUpload() {
         
     }
 		reader.readAsBinaryString(file);
-        console.log("test");
+        
 	}
 	
 	else(alert("no file"));
@@ -160,7 +223,7 @@ async function handleUpload() {
 function generateExcel(results) {
 	
 		data = [];
-        console.log(results);
+        
         
 
         if (results != null && results != undefined && results.length > 1){
@@ -200,8 +263,11 @@ function generateExcel(results) {
                     version = result['Version'];
                 }
                 
-                if (result['Course Code']){
-                    course_code = result['Course Code'];
+                if (result['course_code']){
+                    course_code = result['course_code'];
+                }
+                if (result['course_section']){
+                    course_section = result['course_section'];
                 }
 				
 				if (result['Library']){
@@ -239,8 +305,8 @@ function generateExcel(results) {
                     'MMS ID': mms_id,
                     'ISBN': isbn,
                     'Version': version,
-                    'Course Code': course_code,
-                    'Course Section': course_section,
+                    'course_code': course_code,
+                    'course_section': course_section,
                     'Returned Format': format,
 					'Library': library,
 					'Location': library_location,
@@ -249,15 +315,15 @@ function generateExcel(results) {
                     'Description': description,
                     'Call Number': call_number,
                     'Citation Type': '',
-                    'section_info': '',
-                    'Item Policy': ''
+                    'section_info': result['section_info'] || '',
+                    'Item Policy': result['item_policy'] || result['Item Policy'] || '' 
                 };
 				
 				for (var k in result){
 				if(!(row.hasOwnProperty(k))){
 				if (result.hasOwnProperty(k)) {
-					k = k + " - Input";
-				row[k] =result[k];
+				
+					row[k] = result[k];
 					
 				}
 				}
@@ -275,8 +341,8 @@ function generateExcel(results) {
                         'MMS ID': "ERROR",
                         'ISBN': "ERROR",
                         'Version': "ERROR",
-                        'Course Code': "ERROR",
-                        'Course Section': "ERROR",
+                        'course_code': "ERROR",
+                        'course_section': "ERROR",
                         'Returned Format': "ERROR",
 						'Library': "ERROR",
 						'Location': "ERROR",
@@ -285,14 +351,13 @@ function generateExcel(results) {
                         'Description': "ERROR",
                         'Call Number': "ERROR",
                         'Citation Type': '',
-                        'section_info': '',
-                        'Item Policy': ''
+						'section_info': '',
+                        'Item Policy': '' 
                     };
 					for (var k in result){
 				if(!(row.hasOwnProperty(k))){
 				if (result.hasOwnProperty(k)) {
-					k = k + " - Input";
-				row[k] =result[k];
+					row[k] = result[k];
 					
 				}
 				}
@@ -302,7 +367,7 @@ function generateExcel(results) {
                 
             });
         } else {
-            console.log(JSON.stringify(results));
+            
             let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, library, library_location, call_number, barcode, description, format;
 
             if (results['Title']) {
@@ -337,8 +402,12 @@ function generateExcel(results) {
                 version = results['Version'];
             }
             
-            if (results['Course Code']){
-                course_code = results['Course Code'];
+            if (results['course_code']){
+                course_code = results['course_code'];
+            }
+
+            if (results['course_section']){
+                course_section = results['course_section'];
             }
             
 			if (results['Library']){
@@ -381,19 +450,19 @@ function generateExcel(results) {
 				'Library': library,
 				'Location': library_location,
                 'Call Number': call_number,
-                'Call Number': call_number,
                 'Barcode': barcode,
                 'Description': description,
                 'Citation Type': '',
-                'section_info': '',
-                'Item Policy': ''
+                'section_info': result['section_info'] || '',
+                'Item Policy': result['item_policy'] || result['Item Policy'] || '' 
             };
 			
 			for (var k in results){
 				if(!(row.hasOwnProperty(k))){
 				if (results.hasOwnProperty(k)) {
-					k = k + " - Input";
-				row[k] =results[k];
+					//k = k + " - Input";
+				 	 row[k] = results[k];
+                                         
 					
 				}
 				}
@@ -428,9 +497,8 @@ function generateExcel(results) {
 			for (var k in results){
 				if(!(row.hasOwnProperty(k))){
 				if (results.hasOwnProperty(k)) {
-					k = k + " - Input";
-				row[k] =results[k];
-					
+					//k = k + " - Input
+				 	 row[k] = results[k];					
 				}
 				}
 			}
