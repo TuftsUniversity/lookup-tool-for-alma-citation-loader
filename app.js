@@ -43,8 +43,10 @@ async function handleUpload() {
             
 				console.log(JSON.stringify(row));
             
-			const author = row['Author'];
-			const contributor = row['Contributor'];
+			const authorFirst = row['Author First'];
+            const authorLast = row['Author Last'];
+			const contributorFirst = row['Contributor First'];
+            const contributorLast = row['Contributor Last'];
 			const title = row['Title'];
 			const publisher = row['Publisher'];
 			const year = row['Year'];
@@ -68,11 +70,17 @@ async function handleUpload() {
 			}
 
 		    console.log(format);
-            row['Author - Input'] = row['Author']  
-            delete row['Author']
+            row['Author First- Input'] = row['Author First']  
+            delete row['Author First']
 
-            row['Contributor - Input'] = row['Contributor']  
-            delete row['Contributor']
+            row['Author Last - Input'] = row['Author Last']  
+            delete row['Author Last']
+
+            row['Contributor First - Input'] = row['Contributor First']  
+            delete row['Contributor First']
+
+            row['Contributor Last - Input'] = row['Contributor Last']  
+            delete row['Contributor Last']
 
             row['Title - Input'] = row['Title']  
             delete row['Title']
@@ -98,8 +106,10 @@ async function handleUpload() {
                 
             
 			var c_row = {
-            "Author - Input": author,
-            "Contributor - Input": contributor,
+            "Author First - Input": authorFirst,
+            "Author Last - Input": authorLast,
+            "Contributor First - Input": contributorFirst,
+            "Contributor Last - Input": contributorLast,
             "Title - Input": title,
             "Publisher - Input": publisher,
             "Year - Input": year,
@@ -149,8 +159,10 @@ async function handleUpload() {
 					'Instructor Last Name - Input': row['Instructor Last Name - Input'],
 					'Course Semester - Input': row['Course Semester - Input'],
 					'Title - Input': row['Title - Input'] || '',
-					'Author - Input': row['Author - Input'] || '',
-					'Contributor - Input': row['Contributor - Input'] || '',
+					'Author First - Input': row['Author First - Input'] || '',
+                    'Author Last - Input': row['Author Last- Input'] || '',
+					'Contributor First - Input': row['Contributor First - Input'] || '',
+                    'Contributor Last - Input': row['Contributor Last - Input'] || '',
 					'Publisher - Input': row['Publisher - Input'] || '',
 					'Year - Input': row['Year - Input'] || '',
 					'Format': format || '',

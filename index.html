@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>Excel Upload and API Query</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
@@ -16,7 +17,9 @@
     </header>
     <div class="content">
     <h1>Lookup Tool</h1>
-    
+      <label labelfor="download">Download sample input file</label>
+      <a href="example input.xlsx">Download</a>
+        <br>
       <label labelfor="fileInput">Upload Excel File</label>
       <input type="file" id="fileInput" accept=".xlsx, .xls">
       <button onclick="handleUpload()">Upload</button>

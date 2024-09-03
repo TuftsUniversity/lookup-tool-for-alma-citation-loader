@@ -94,9 +94,13 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
     $title = $row['Title - Input'] ?? '';
 
-    $author = $row['Author - Input'] ?? '';
+    $authorFirst = $row['Author First - Input'] ?? '';
 
-    $contributor = $row['Contributor - Input'] ?? '';
+    $authorLast = $row['Author Last - Input'] ?? '';
+
+    $contributorFirst = $row['Contributor First - Input'] ?? '';
+
+    $contributorLast = $row['Contributor Last - Input'] ?? '';
 
     $publisher = $row['Publisher - Input'] ?? '';
 
@@ -180,85 +184,114 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 		exit;
 	}
-   if (!empty($author)) {
+   if (!empty($authorLast)) {
 
-    // Handle 'and' in the author string
-    if (strpos($author, 'and') !== false) {
-        $pattern = '/^(.+?)(?=and).+?$/i';
-        $replacement = '$1';
-        $author = preg_replace($pattern, $replacement, $author);
+    if(!empty($authorFirst)){
+
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($authorLast . "," . $authorFirst) . "*%22";
+
     }
 
-    // Remove titles and roles like 'trans.', 'ed.', 'eds.'
-    if (strpos($author, 'trans.') !== false || strpos($author, 'ed.') !== false || strpos($author, 'eds.') !== false) {
-        $pattern = '/(ed\.\s*|trans\.\s*|eds\.\s*)/i';
-        $replacement = '';
-        $author = preg_replace($pattern, $replacement, $author);
+    else{
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($authorLast) . "*%22";
+
+
     }
 
-    // Check if the author string contains a comma
-    if (strpos($author, ',') !== false) {
-        // Clean up the format "${last},*${first}"
-        $pattern = '/^([^,]+),\s*([^,]+).*$/i';
-        $replacement = '${1}*${2}';
-        $author = preg_replace($pattern, $replacement, $author);
-    } else {
-        // Transpose the author name if no comma is present
-        $pattern = '/^([^ ]+)\s+([^ ]+).*$/i';
-        $replacement = '${2},*${1}';
-        $author = preg_replace($pattern, $replacement, $author);
-    }
-
-    // Build the query string
-    $query .= "%20AND%20alma.creator=%22*" . urlencode($author) . "*%22";
 }
 
+    // // Handle 'and' in the author string
+    // if (strpos($author, 'and') !== false) {
+    //     $pattern = '/^(.+?)(?=and).+?$/i';
+    //     $replacement = '$1';
+    //     $author = preg_replace($pattern, $replacement, $author);
+    // }
 
-    if (!empty($contributor)) {
+    // // Remove titles and roles like 'trans.', 'ed.', 'eds.'
+    // if (strpos($author, 'trans.') !== false || strpos($author, 'ed.') !== false || strpos($author, 'eds.') !== false) {
+    //     $pattern = '/(ed\.\s*|trans\.\s*|eds\.\s*)/i';
+    //     $replacement = '';
+    //     $author = preg_replace($pattern, $replacement, $author);
+    // }
 
-        if (strpos($contributor, 'and') !== false) {
+    // // Check if the author string contains a comma
+    // if (strpos($author, ',') !== false) {
+    //     // Clean up the format "${last},*${first}"
+    //     $pattern = '/^([^,]+),\s*([^,]+).*$/i';
+    //     $replacement = '${1}*${2}';
+    //     $author = preg_replace($pattern, $replacement, $author);
+    // } else {
+    //     // Transpose the author name if no comma is present
+    //     $pattern = '/^([^ ]+)\s+([^ ]+).*$/i';
+    //     $replacement = '${2},*${1}';
+    //     $author = preg_replace($pattern, $replacement, $author);
+    // }
 
-            $pattern = '/^([^,]+).+?and.+?$/i';
+    // Build the query string
+   // ?$query .= "%20AND%20alma.creator=%22*" . urlencode($author) . "*%22";
 
-            $replacement = '$1';
 
-            $contributor = preg_replace($pattern, $replacement, $contributor);
+   if (!empty($contributorLast)) {
 
-        }
+    if(!empty($contributorFirst)){
 
-        if (strpos($contributor, 'trans.') !== false || strpos($contributor, 'ed.') !== false || strpos($contributor, 'eds.') !== false) {
-
-            $pattern = '/(ed.\s*|trans\.\s*|eds\.\s*)(.+)/i';
-
-            $replacement = '$2';
-
-            $contributor = preg_replace($pattern, $replacement, $contributor);
-
-        }
-
-        if (strpos($contributor, ',') !== false) {
-
-            $pattern = '/^([^,]+),\s*([^,]+).*$/i';
-
-            $replacement = '${1}*${2}'; 
-
-            $contributor = preg_replace($pattern, $replacement, $contributor);
-
-            //$author = implode(' ', array_reverse(preg_split('/,\s*/', $author$
-
-        }
-		
-
-		
-		else{
-			$pattern = '/^([^ ]+)\s+([^ ]+).*$/i';
-			$replacement = '${2},*${1}'; 
-			$contributor = preg_replace($pattern, $replacement, $contributor);
-		}
-
-        $query .= "%20AND%20alma.creator=%22*" . urlencode($contributor) . "*%22";
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($contributorLast . "," . $contributorFirst) . "*%22";
 
     }
+
+    else{
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($contributorLast) . "*%22";
+
+
+    }
+
+}
+
+    // if (!empty($contributor)) {
+
+    //     if (strpos($contributor, 'and') !== false) {
+
+    //         $pattern = '/^([^,]+).+?and.+?$/i';
+
+    //         $replacement = '$1';
+
+    //         $contributor = preg_replace($pattern, $replacement, $contributor);
+
+    //     }
+
+    //     if (strpos($contributor, 'trans.') !== false || strpos($contributor, 'ed.') !== false || strpos($contributor, 'eds.') !== false) {
+
+    //         $pattern = '/(ed.\s*|trans\.\s*|eds\.\s*)(.+)/i';
+
+    //         $replacement = '$2';
+
+    //         $contributor = preg_replace($pattern, $replacement, $contributor);
+
+    //     }
+
+    //     if (strpos($contributor, ',') !== false) {
+
+    //         $pattern = '/^([^,]+),\s*([^,]+).*$/i';
+
+    //         $replacement = '${1}*${2}'; 
+
+    //         $contributor = preg_replace($pattern, $replacement, $contributor);
+
+    //         //$author = implode(' ', array_reverse(preg_split('/,\s*/', $author$
+
+    //     }
+		
+
+		
+	// 	else{
+	// 		$pattern = '/^([^ ]+)\s+([^ ]+).*$/i';
+	// 		$replacement = '${2},*${1}'; 
+	// 		$contributor = preg_replace($pattern, $replacement, $contributor);
+	// 	}
+
+    //     $query .= "%20AND%20alma.creator=%22*" . urlencode($contributor) . "*%22";
+
+    // }
 
     if (!empty($year)) {
 
