@@ -55,7 +55,7 @@ if (!empty($apiResult)) {
 
         'Title' => 'Wrong format for ' . ($record['Title - Input'] ?? ''),
 
-        'Author' => 'Wrong format for ' . ($record['Author - Input'] ?? ''),
+        'Author Last' => 'Wrong format for ' . ($record['Author Last - Input'] ?? ''),
 
         'Contributor' => 'Wrong format for ' . ($record['Contributor - Input'] ?? ''),
 
@@ -119,6 +119,10 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
     $instructor = urlencode($row['Instructor Last Name - Input'] ?? '');
 
+    // if ($instructor = "") {
+    //     unset($instructor)
+    // }
+
 
 
     $query = "https://tufts.alma.exlibrisgroup.com/view/sru/01TUN_INST?version=1.2&operation=searchRetrieve&recordSchema=marcxml";
@@ -155,7 +159,7 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 			'Title' => 'No results for ' . ($title ?? ''),
 
-			'Author' => 'No results for ' . ($author ?? ''),
+			'Author Last' => 'No results for ' . ($author_last ?? ''),
 
 			'Publisher' => 'No results for ' . ($publisher ?? ''),
 
@@ -325,10 +329,19 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 
 
-    if (!empty($course_number) && !empty($instructor) && !empty($course_semester)) {
+    if (!empty($course_number) && !empty($course_semester)) {
+        if ($instructor != ""){
+            $request_url = $courseURL . "apikey=" . $apiKeyCourses . "&q=name~" . $course_semester . "-" . $course_number . "%20AND%20instructors~" . $instructor . "&format=json";
 
-        $request_url = $courseURL . "apikey=" . $apiKeyCourses . "&q=name~" . $course_semester . "-" . $course_number . "%20AND%20instructors~" . $instructor . "&format=json";
+        }
 
+        else{
+            $request_url = $courseURL . "apikey=" . $apiKeyCourses . "&q=name~" . $course_semester . "-" . $course_number . "&format=json";
+
+
+        }
+
+        
         $responseCourse = file_get_contents($request_url);
 
         $jsonCourse = json_decode($responseCourse, true);

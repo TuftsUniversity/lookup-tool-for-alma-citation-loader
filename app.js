@@ -52,7 +52,19 @@ async function handleUpload() {
 			const year = row['Year'];
 			const course_number = row['Course Number'];
 			const course_semester = row['Course Semester'];
-			const instructor = row['Instructor Last Name'];
+            var instructor;
+            if (row['Instructor Last Name'] != undefined){
+                instructor = row['Instructor Last Name'];
+
+                row['Instructor Last Name - Input'] = row['Instructor Last Name'];
+                delete row['Instructor Last Name']
+            }
+
+            else{
+                instructor = "";
+
+            }
+			
 			if (row['Format'] != undefined){
 				format = row['Format'];
                 row['Format - Input'] = row['Format']
@@ -70,7 +82,7 @@ async function handleUpload() {
 			}
 
 		    console.log(format);
-            row['Author First- Input'] = row['Author First']  
+            row['Author First - Input'] = row['Author First']  
             delete row['Author First']
 
             row['Author Last - Input'] = row['Author Last']  
@@ -331,18 +343,23 @@ function generateExcel(results) {
                     'Item Policy': result['item_policy'] || result['Item Policy'] || '' 
                 };
 				
+                var newValues = {};
 				for (var k in result){
 				if(!(row.hasOwnProperty(k))){
 				if (result.hasOwnProperty(k)) {
 				
-					row[k] = result[k];
+					//row[k] = result[k];
+                    newValues[k] = result[k];
 					
 				}
 				}
 			}
 
                 if(typeof row == 'object'){
-                    data.push(row);
+                    //data.push(row);
+                    var newRow = Object.assign(newValues, row);
+                
+                    data.push(newRow);
                 } else {
                     row = {
                         'Title': "ERROR",
@@ -366,15 +383,20 @@ function generateExcel(results) {
 						'section_info': '',
                         'Item Policy': '' 
                     };
+
+                    var newValues = {};
 					for (var k in result){
 				if(!(row.hasOwnProperty(k))){
 				if (result.hasOwnProperty(k)) {
-					row[k] = result[k];
+					newValues[k] = result[k];
 					
 				}
 				}
 			}
-                    data.push(row);
+
+                var newRow = Object.assign(newValues, row);
+                
+                data.push(newRow);
                 }
                 
             });
@@ -468,20 +490,24 @@ function generateExcel(results) {
                 'section_info': '',
                 'Item Policy': ''
             };
-			
+            var newValues = {};
 			for (var k in results){
 				if(!(row.hasOwnProperty(k))){
 				if (results.hasOwnProperty(k)) {
 					//k = k + " - Input";
-				 	 row[k] = results[k];
+				 	 //row[k] = results[k];
+                    newValues[k] = results[k];
                                          
 					
 				}
 				}
 			}
+
+            var newRow = Object.assign(newValues, row)
+            alert(JSON.stringify(newRow));
             
             if(typeof row == 'object'){
-                data.push(row);
+                data.push(newRow);
             } else {
                 row = {
                     'Title': "ERROR",
@@ -505,29 +531,41 @@ function generateExcel(results) {
                     'section_info': '',
                     'Item Policy': ''
                 };
-				
+                var newValues = {};
 			for (var k in results){
 				if(!(row.hasOwnProperty(k))){
 				if (results.hasOwnProperty(k)) {
 					//k = k + " - Input
-				 	 row[k] = results[k];					
+				 	 //row[k] = results[k];	
+                    newValues[k] = results[k];				
 				}
 				}
 			}
-                data.push(row);
+                var newRow = Object.assign(newValues, row);
+                alert(JSON.stringify(newRow));
+                data.push(newRow);
             }
         }
 		
 	
 
-
+    console.log(data);
     const ws = XLSX.utils.json_to_sheet(data, {cellText: true});
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Results');
-
     const range = XLSX.utils.decode_range(ws['!ref']);
+    let barcodeColIndex = -1; // Initialize to -1 to signify not found
+
+    // Find the index of the column with the header "Barcode"
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cell = ws[XLSX.utils.encode_cell({r: range.s.r, c: C})];
+        if (cell && cell.v === "Barcode") {
+            barcodeColIndex = C;
+            break; // Exit loop once the column is found
+        }
+    }
     for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-        const cell = ws[XLSX.utils.encode_cell({r: R, c: 14})];
+        const cell = ws[XLSX.utils.encode_cell({r: R, c: barcodeColIndex})];
         if (cell && cell.v) {
             cell.t = 's'; // Set cell type to string
             cell.z = '@'; // Set cell format to text
