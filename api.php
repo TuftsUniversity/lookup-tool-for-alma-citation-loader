@@ -127,7 +127,7 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
     $query = "https://tufts.alma.exlibrisgroup.com/view/sru/01TUN_INST?version=1.2&operation=searchRetrieve&recordSchema=marcxml";
 
-
+    $query .= "&query=alma.mms_tagSuppressed=false";
 
     if (!empty($title)) {
 
@@ -136,18 +136,18 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 
 
-		// Remove punctuation marks ,:;. and "\
-		$title = preg_replace('/[,:;."\']/', ' ', $title);
+		//Remove punctuation marks ,:;. and "\
+		$title = preg_replace('/[,:;."\'\“]/', ' ', $title);
 
-		// Replace hyphens with spaces
-		$title = preg_replace('/[-]/', ' ', $title);
+		//Replace hyphens with spaces
+		//$title = preg_replace('/[-]/', ' ', $title);
 
-		// Replace ampersands with spaces
+		//Replace ampersands with spaces
 		$title = preg_replace('/[&]/', ' ', $title);
 
 
 
-        $query .= "&query=alma.title=%22*" . urlencode($title) . "*%22";
+        $query .= "%20AND%20alma.title==%22*" . urlencode($title) . "*%22";
 		
 		
 
@@ -159,7 +159,7 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 			'Title' => 'No results for ' . ($title ?? ''),
 
-			'Author Last' => 'No results for ' . ($author_last ?? ''),
+			'Author' => 'No results for ' . ($authorLast ?? ''),
 
 			'Publisher' => 'No results for ' . ($publisher ?? ''),
 
@@ -299,17 +299,18 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
     if (!empty($year)) {
 
-        $query .= "%20AND%20alma.main_pub_date=" . $year;
+        $query .= "%20AND%20%28alma.main_public_date=%22" . $year . "%22%20OR%20alma.date_of_publication=%22" . $year . "%22%29";
 
     }
 	
-	$query .= "%20and%20alma.mms_tagSuppressed=false";
+	
 	
 
 
 	
 
 
+    error_log($query);
     $response = file_get_contents($query);
 	
 	// Gets rid of all namespace definitions 
@@ -341,12 +342,20 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
         }
 
-        
+        error_log($request_url);
         $responseCourse = file_get_contents($request_url);
 
         $jsonCourse = json_decode($responseCourse, true);
 
-    
+        foreach($jsonCourse['course'] as $course){
+
+            $instructors = [];
+                    foreach ($course['instructor'] as $instructor1) {
+                        $instructors[] = $instructor1['last_name'];
+                    }
+                    
+                    $instructorString = implode(';', $instructors);
+              
 
 if ($xml_string === false) {
     die('Error loading XML.');
@@ -379,7 +388,7 @@ if (count($records) > 0) {
                 $phys_mms_id = $xpath->query("//datafield[@tag='AVA']/subfield[@code='0']")->item(0)->nodeValue;
 
 
-		;
+		
 
                 $itemQuery = "https://api-na.hosted.exlibrisgroup.com/almaws/v1/bibs/$phys_mms_id/holdings/ALL/items?apikey=$apiBib&format=json";
 
@@ -389,14 +398,14 @@ if (count($records) > 0) {
                 $items = json_decode($responseItems, true);
 
 			
-			
+                foreach ($items['item'] as $item) {
 				
 
                 if ((int)$items['total_record_count'] > 0) {
 					
 					
 
-                    foreach ($items['item'] as $item) {
+                    
 						
 						$library = "";
 						$location = "";
@@ -459,9 +468,13 @@ if (count($records) > 0) {
 
                             'ISBN' => $xpath->query("//datafield[@tag='020']/subfield[@code='a']")->item(0)->nodeValue,
 
-                            'course_code' => $jsonCourse['course'][0]['code'] ?? '',
+                            'Course Name' => $course['name'] ?? '',
+                            
+                            'course_code' => $course['code'] ?? '',
 
-                            'course_section' => $jsonCourse['course'][0]['section'] ?? '',
+                            'course_section' => $course['section'] ?? '',
+
+                            'Course Instructor' => $instructorString,
 							
 							'Library' => $library ?? '',
 							
@@ -496,7 +509,9 @@ if (count($records) > 0) {
 
                     }
 
-                }
+                
+
+            }
 
             }
 			
@@ -552,9 +567,13 @@ if (count($records) > 0) {
 
                     'ISBN' => $xpath->query("//datafield[@tag='020']/subfield[@code='a']")->item(0)->nodeValue,
 
-                    'course_code' => $jsonCourse['course'][0]['code'] ?? '',
+                    'Course Name' => $course['name'] ?? '',
+                    
+                    'course_code' =>  $course['code'] ?? '',
 
-                    'course_section' => $jsonCourse['course'][0]['section'] ?? '',
+                    'course_section' =>  $course['section'] ?? '',
+
+                    'Course Instructor' =>  $instructorString,
 
                     'Returned Format' => 'Electronic'
 
@@ -618,6 +637,7 @@ if (count($records) > 0) {
 
     }
 	
+}
 } else{
 	$results[] = [
 

@@ -11,7 +11,6 @@ async function handleUpload() {
     const fileInput = document.getElementById('fileInput');
     const file = fileInput.files[0];
 	
-	
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -52,19 +51,9 @@ async function handleUpload() {
 			const year = row['Year'];
 			const course_number = row['Course Number'];
 			const course_semester = row['Course Semester'];
-            var instructor;
-            if (row['Instructor Last Name'] != undefined){
-                instructor = row['Instructor Last Name'];
+            const instructor = row['Instructor Last Name'];
+            
 
-                row['Instructor Last Name - Input'] = row['Instructor Last Name'];
-                delete row['Instructor Last Name']
-            }
-
-            else{
-                instructor = "";
-
-            }
-			
 			if (row['Format'] != undefined){
 				format = row['Format'];
                 row['Format - Input'] = row['Format']
@@ -172,7 +161,7 @@ async function handleUpload() {
 					'Course Semester - Input': row['Course Semester - Input'],
 					'Title - Input': row['Title - Input'] || '',
 					'Author First - Input': row['Author First - Input'] || '',
-                    'Author Last - Input': row['Author Last- Input'] || '',
+                    'Author Last - Input': row['Author Last - Input'] || '',
 					'Contributor First - Input': row['Contributor First - Input'] || '',
                     'Contributor Last - Input': row['Contributor Last - Input'] || '',
 					'Publisher - Input': row['Publisher - Input'] || '',
@@ -252,7 +241,7 @@ function generateExcel(results) {
 
         if (results != null && results != undefined && results.length > 1){
             results.forEach(result => {
-                let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, library, library_location, call_number, barcode, description, format;
+                let title, author, contributor, publisher, date, mms_id, isbn, version, course_name, course_code, course_section, course_instructor, library, library_location, call_number, barcode, description, format;
 
 
 				
@@ -287,12 +276,22 @@ function generateExcel(results) {
                     version = result['Version'];
                 }
                 
+                if (result['Course Name']) {
+                    course_name = result['Course Name'];
+                  }
+
                 if (result['course_code']){
                     course_code = result['course_code'];
                 }
                 if (result['course_section']){
                     course_section = result['course_section'];
                 }
+
+                
+                if (result['Course Instructor']) {
+                    course_instructor = result['Course Instructor'];
+                }
+    
 				
 				if (result['Library']){
 					library = result['Library'];
@@ -329,8 +328,10 @@ function generateExcel(results) {
                     'MMS ID': mms_id,
                     'ISBN': isbn,
                     'Version': version,
+                    'Course Name': course_name,
                     'course_code': course_code,
                     'course_section': course_section,
+                    'Course Instructor': course_instructor,
                     'Returned Format': format,
 					'Library': library,
 					'Location': library_location,
@@ -402,7 +403,7 @@ function generateExcel(results) {
             });
         } else {
             
-            let title, author, contributor, publisher, date, mms_id, isbn, version, course_code, course_section, library, library_location, call_number, barcode, description, format;
+            let title, author, contributor, publisher, date, mms_id, isbn, version, course_name, course_code, course_section, course_instructor, library, library_location, call_number, barcode, description, format;
 
             if (results['Title']) {
                 title = results['Title'];
@@ -435,6 +436,10 @@ function generateExcel(results) {
             if (results['Version']) {
                 version = results['Version'];
             }
+
+            if (results['Course Name']) {
+                course_name = results['Course Name'];
+              }
             
             if (results['course_code']){
                 course_code = results['course_code'];
@@ -442,6 +447,10 @@ function generateExcel(results) {
 
             if (results['course_section']){
                 course_section = results['course_section'];
+            }
+
+            if (results['Course Instructor']) {
+                course_instructor = results['Course Instructor'];
             }
             
 			if (results['Library']){
@@ -478,8 +487,10 @@ function generateExcel(results) {
                 'MMS ID': mms_id,
                 'ISBN': isbn,
                 'Version': version,
+                'Course Name': course_name,
                 'Course Code': course_code,
                 'Course Section': course_section,
+                'Course Instructor': course_instructor,
                 'Returned Format': format,
 				'Library': library,
 				'Location': library_location,
