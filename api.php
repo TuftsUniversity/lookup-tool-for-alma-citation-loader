@@ -66,7 +66,6 @@ $apiBib = $secrets['API_BIB'];
 } */
 
 
-
 function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
     $title = $row['Title'] ?? '';
     $author = $row['Author'] ?? '';
@@ -78,20 +77,20 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
     $instructor = urlencode($row['Instructor Last Name'] ?? '');
     
     $query = "https://tufts.alma.exlibrisgroup.com/view/sru/01TUN_INST?version=1.2&operation=searchRetrieve&recordSchema=marcxml";
-    
+    $query .= "&alma.mms_tagSuppressed=false";
     if (!empty($title)) {
 		// Remove punctuation marks ,:;. and "\
-		$title = preg_replace('/[,:;."\']/', ' ', $title);
+		$title = preg_replace('/[,:;."\'\â€œ\â€\â€˜\â€™]/', ' ', $title);
 
 		// Replace hyphens with spaces
-		$title = preg_replace('/[-]/', ' ', $title);
+		$//title = preg_replace('/[-]/', ' ', $title);
 
 		// Replace ampersands with spaces
-		$title = preg_replace('/[&]/', ' ', $title);
+		$title = preg_replace('/&/', ' ', $title);
 
 
 
-        $query .= "&query=alma.title=%22*" . urlencode($title) . "*%22";
+        $query .= "%20AN%20alma.title=%22*" . urlencode($title) . "*%22";
 				 
     }
 
@@ -101,13 +100,13 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 			'Title' => 'No results for ' . ($title ?? ''),
 
-			'Author' => 'No results for ' . ($author ?? ''),
+			'Author' => 'No results for ' . ($authorLast ?? ''),
 
 			'Publisher' => 'No results for ' . ($publisher ?? ''),
 
-			'Year' => 'No results for ' . ($year ?? ''),
+			'Date' => 'No results for ' . ($year ?? ''),
 
-			'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+			'course_code' => $jsonCourse['course'][0]['code'] ?? '',
 
 			'Returned Format' => 'N/A'
 
@@ -115,7 +114,7 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 
 
-		// Copy the fields that were passed into the input that aren’t used in processing for return
+		// Copy the fields that were passed into the input that arenï¿½t used in processing for return
 
 		foreach ($row as $key => $value) {
 
@@ -126,71 +125,52 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 			}
 
 		}
-		echo json_encode($result);
+		echo json_encode($results);
 
 		exit;
 	}
-    if (!empty($author)) {
-        if(strpos($author, ';') !== false){
-            $pattern = '/^([^;]+).+?;.+?$/i';
-            $replacement = '$1';
-            $author = preg_replace($pattern, $replacement, $author);
+     if (!empty($authorLast)) {
 
-        }
-    		// Remove titles and roles like 'trans.', 'ed.', 'eds.'
+    if(!empty($authorFirst)){
 
-            if (strpos($author, 'trans.') !== false || strpos($author, 'ed.') !== false || strpos($author, 'eds.') !== false){
-            $pattern = '/(ed.\s*|trans\.\s*)(.+)/i';
-            $replacement = '$2';
-            $author = preg_replace($pattern, $replacement, $author);
-
-        }
-        // Check if the author string contains a comma
-    if (strpos($author, ',') !== false) {
-        // Clean up the format "${last},*${first}"
-        $pattern = '/^([^,]+),\s*([^,]+).*$/i';
-        $replacement = '${1}*${2}';
-        $author = preg_replace($pattern, $replacement, $author);
-    }
-        $query .= "%20AND%20alma.creator=%22*" . urlencode($author) . "*%22";
-}    
-    if (!empty($contributor)) {
-        if(strpos($contributor, ';') !== false){
-            $pattern = '/^([^;]+).+?;.+?$/i';
-            $replacement = '$1';
-            $contributor = preg_replace($pattern, $replacement, $contributor);
-
-        }
-    		// Remove titles and roles like 'trans.', 'ed.', 'eds.'
-
-            if (strpos($contributor, 'trans.') !== false || strpos($contributor, 'ed.') !== false || strpos($contributor, 'eds.') !== false){
-                       $pattern = '/(ed.\s*|trans\.\s*|eds\.\s*)(.+)/i';            $replacement = '$2';
-            $contributor = preg_replace($pattern, $replacement, $contributor);
-
-        }
-        // Check if the author string contains a comma
-    if (strpos($contributor, ',') !== false) {
-        // Clean up the format "${last},*${first}"
-        $pattern = '/^([^,]+),\s*([^,]+).*$/i';
-        $replacement = '${1}*${2}';
-             $contributor = preg_replace($pattern, $replacement, $contributor);
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($authorLast . "," . $authorFirst) . "*%22";
 
     }
 
-		else{
-			$pattern = '/^([^ ]+)\s+([^ ]+).*$/i';
-			$replacement = '${2},*${1}'; 
-			$contributor = preg_replace($pattern, $replacement, $contributor);
-		}
-        $query .= "%20AND%20alma.creator=%22*" . urlencode($contributor) . "*%22";
+    else{
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($authorLast) . "*%22";
+
+
     }
+
+}
+    
+
+
+   if (!empty($contributorLast)) {
+
+    if(!empty($contributorFirst)){
+
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($contributorLast . "," . $contributorFirst) . "*%22";
+
+    }
+
+    else{
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($contributorLast) . "*%22";
+
+
+    }
+
+}
     if (!empty($year)) {
 
-        $query .= "%20AND%20alma.main_pub_date=" . $year;
+           $query .= "%20AND%20%28alma.main_public_date=%22" . $year . "%22%20OR%20alma.date_of_publication=%22" . $year . "%22%29";
 
     }
 	
 	$query .= "%20and%20alma.mms_tagSuppressed=false";
+
+    error_log($query);
 	
     $response = file_get_contents($query);
     $json = json_decode($response, true);
@@ -201,13 +181,24 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 	$xml_string = preg_replace('/[a-zA-Z]+:([a-zA-Z]+[=>])/', '$1', $xml_string);
 
 
-	error_log($xml_string);
+	//error_log($xml_string);
 
     $results = [];
     
     $courseURL = "https://api-na.hosted.exlibrisgroup.com/almaws/v1/courses?";
     
     if (!empty($course_number) && !empty($instructor) && !empty($course_semester)) {
+
+		if ($instructor != ""){
+            $request_url = $courseURL . "apikey=" . $apiKeyCourses . "&q=name~" . $course_semester . "-" . $course_number . "%20AND%20instructors~" . $instructor . "&format=json";
+
+        }
+
+        else{
+            $request_url = $courseURL . "apikey=" . $apiKeyCourses . "&q=name~" . $course_semester . "-" . $course_number . "&format=json";
+
+
+        }
         $request_url = $courseURL . "apikey=" . $apiKeyCourses . "&q=name~" . $course_semester . "-" . $course_number . "%20AND%20instructors~" . $instructor . "&format=json";
         $responseCourse = file_get_contents($request_url);
         $jsonCourse = json_decode($responseCourse, true);
@@ -322,9 +313,9 @@ if (count($records) > 0) {
 
                             'ISBN' => $xpath->query("//datafield[@tag='020']/subfield[@code='a']")->item(0)->nodeValue,
 
-                            'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+                            'course_code' => $jsonCourse['course'][0]['code'] ?? '',
 
-                            'Course Section' => $jsonCourse['course'][0]['section'] ?? '',
+                            'course_section' => $jsonCourse['course'][0]['section'] ?? '',
 							
 							'Library' => $library ?? '',
 							
@@ -338,11 +329,13 @@ if (count($records) > 0) {
 
                             'Returned Format' => 'Physical'
 
+                            
+
                         ];
 
 
 
-                        // Copy the fields that were passed into the input that aren’t used in processing for return
+                        // Copy the fields that were passed into the input that arenï¿½t used in processing for return
 
                         foreach ($row as $key => $value) {
 
@@ -412,9 +405,9 @@ if (count($records) > 0) {
 
                     'ISBN' => $xpath->query("//datafield[@tag='020']/subfield[@code='a']")->item(0)->nodeValue,
 
-                    'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+                    'course_code' => $jsonCourse['course'][0]['code'] ?? '',
 
-                    'Course Section' => $jsonCourse['course'][0]['section'] ?? '',
+                    'course_section' => $jsonCourse['course'][0]['section'] ?? '',
 
                     'Returned Format' => 'Electronic'
 
@@ -422,7 +415,7 @@ if (count($records) > 0) {
 
 
 
-                // Copy the fields that were passed into the input that aren’t used in processing for return
+                // Copy the fields that were passed into the input that arenï¿½t used in processing for return
 
                 foreach ($row as $key => $value) {
 
@@ -456,7 +449,9 @@ if (count($records) > 0) {
 
             'Year' => 'No results for ' . ($year ?? ''),
 
-            'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+            'course_code' => $jsonCourse['course'][0]['code'] ?? '',
+
+            'course_section' => $jsonCourse['course'][0]['section'] ?? '',
 
             'Returned Format' => 'N/A'
 
@@ -464,7 +459,7 @@ if (count($records) > 0) {
 
 
 
-        // Copy the fields that were passed into the input that aren’t used in processing for return
+        // Copy the fields that were passed into the input that arenï¿½t used in processing for return
 
         foreach ($row as $key => $value) {
 
@@ -489,7 +484,9 @@ if (count($records) > 0) {
 
             'Year' => 'No course for ' . ($year ?? ''),
 
-            'Course Code' =>  $course_number . "-" . $course_semester . "-" . $instructor ?? '',
+            'course_code' =>  $course_number . "-" . $course_semester . "-" . $instructor ?? '',
+
+            'course_section' => $jsonCourse['course'][0]['section'] ?? '',
 
             'Returned Format' => 'N/A'
 

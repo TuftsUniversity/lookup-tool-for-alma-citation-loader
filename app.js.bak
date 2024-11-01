@@ -23,6 +23,19 @@ async function handleUpload(event) {
         const courseSemester = row.querySelector('input[name="courseSemester"]').value;
         const courseCitations = row.querySelector('textarea[name="courseCitations"]').value;
 
+		 // Collect all existing keys
+        courseCitations.forEach(row => {
+
+            for (let key in row) {
+                const trimmedKey = key.trim();  // Trim the key
+                existingKeys.push(trimmedKey);
+
+            // Replace original key with trimmed version if necessary
+            if (trimmedKey !== key) {
+                row[trimmedKey] = row[key];
+                delete row[key];
+            }
+        }
         if (!citationsValid(courseCitations)) {
             isValid = false;
             alert('Error: citations misformed. Make sure to parse them through https://anystyle.io/');
@@ -31,6 +44,7 @@ async function handleUpload(event) {
 
         const parsedCitations = JSON.parse(courseCitations);
 
+		
 		parsedCitations.forEach(citation => {
 			totalCitations++;
 			courseData.push({
@@ -40,10 +54,12 @@ async function handleUpload(event) {
             citation
         });
 			
-			
-		});
-        
     });
+			
+			
+});
+
+
 
     if (!isValid) return;
 
@@ -68,13 +84,13 @@ async function handleUpload(event) {
             }
 
             const flattenedCitation = {
-                'Course Number': row.courseNumber,
-                'Instructor Last Name': row.courseInstructor,
-                'Course Semester': row.courseSemester,
-                'Title': citation.title || citation['container-title'] || '',
-                'Author': creator ? creator.map(a => `${a.family}, ${a.given}`).join('; ') : '',
-                'Publisher': citation.publisher || '',
-                'Year': citation.issued ? citation.issued['date-parts'][0][0] : ''
+                'Course Number - Input': row.courseNumber,
+                'Instructor Last Name - Input': row.courseInstructor,
+                'Course Semester - Input': row.courseSemester,
+                'Title - Input': citation.title || citation['container-title'] || '',
+                'Author - Input': creator ? creator.map(a => `${a.family}, ${a.given}`).join('; ') : '',
+                'Publisher - Input': citation.publisher || '',
+                'Year - Input': citation.issued ? citation.issued['date-parts'][0][0] : ''
             };
 
             return fetch('api.php', {
@@ -144,10 +160,23 @@ function generateExcel(results) {
                     version = result['Version'];
                 }
                 
-                if (result['Course Code']){
-                    course_code = result['Course Code'];
+                //if (result['Course Name']) {
+                    course_name = result['Course Name'];
+                  }
+
+                if (result['course_code']){
+                    course_code = result['course_code'];
+                }
+                if (result['course_section']){
+                    course_section = result['course_section'];
                 }
                 
+                //
+                //if (result['Course Instructor']) {
+                    course_instructor = result['Course Instructor'];
+                }
+    
+				
 				if (result['Library']){
 					library = result['Library'];
 					
@@ -157,7 +186,6 @@ function generateExcel(results) {
 					library_location = result['Location'];
 					
 				}
-				
                 if (result['Call Number']){
                     call_number = result['Call Number'];
                 }
@@ -184,8 +212,8 @@ function generateExcel(results) {
                     'MMS ID': mms_id,
                     'ISBN': isbn,
                     'Version': version,
-                    'Course Code': course_code,
-                    'Course Section': course_section,
+                    'course_code': course_code,
+                    'course_section': course_section,
                     'Returned Format': format,
 					'Library': library,
 					'Location': library_location,                    'Call Number': call_number,   
@@ -197,7 +225,15 @@ function generateExcel(results) {
                     'section_info': '',
                     'Item Policy': ''
                 };
-
+				for (var k in result){
+				if(!(row.hasOwnProperty(k))){
+				if (result.hasOwnProperty(k)) {
+				
+					row[k] = result[k];
+					
+				}
+				}
+			}
                 if(typeof row == 'object'){
                     data.push(row);
                 } else {
@@ -210,8 +246,8 @@ function generateExcel(results) {
                         'MMS ID': "ERROR",
                         'ISBN': "ERROR",
                         'Version': "ERROR",
-                        'Course Code': "ERROR",
-                        'Course Section': "ERROR",
+                        'course_code': "ERROR",
+                        'course_section': "ERROR",
                          'Returned Format': "ERROR",
 						'Library': "ERROR",
 						'Location': "ERROR",                        'Call Number': "ERROR",    
@@ -223,6 +259,14 @@ function generateExcel(results) {
                         'section_info': '',
                         'Item Policy': ''
                     };
+						for (var k in result){
+				if(!(row.hasOwnProperty(k))){
+				if (result.hasOwnProperty(k)) {
+					row[k] = result[k];
+					
+				}
+				}
+			}
                     data.push(row);
                 }
                 
@@ -263,8 +307,12 @@ function generateExcel(results) {
                 version = results['Version'];
             }
             
-            if (results['Course Code']){
-                course_code = results['Course Code'];
+            if (results['course_code']){
+                course_code = results['course_code'];
+            }
+
+            if (results['course_section']){
+                course_section = results['course_section'];
             }
 			if (results['Library']){
 					library = results['Library'];
@@ -300,9 +348,9 @@ function generateExcel(results) {
                 'MMS ID': mms_id,
                 'ISBN': isbn,
                 'Version': version,
-                'Course Code': course_code,
-                'Course Section': course_section,
-                              'Returned Format': format,
+                'course_code': course_code,
+                'course_section': course_section,
+                'Returned Format': format,
 				'Library': library,
 				'Location': library_location,
                 'Call Number': call_number,
@@ -325,8 +373,8 @@ function generateExcel(results) {
                     'MMS ID': "ERROR",
                     'ISBN': "ERROR",
                     'Version': "ERROR",
-                    'Course Code': "ERROR",
-                    'Course Section': "ERROR",
+                    'course_code': "ERROR",
+                    'course_section': "ERROR",
                     'Returned Format': "ERROR",
 					'Library': "ERROR",
 					'Location': "ERROR",
@@ -347,7 +395,7 @@ function generateExcel(results) {
 
     const range = XLSX.utils.decode_range(ws['!ref']);
     for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-        const cell = ws[XLSX.utils.encode_cell({r: R, c: 13})];
+        const cell = ws[XLSX.utils.encode_cell({r: R, c: 14})];
         if (cell && cell.v) {
             cell.t = 's'; // Set cell type to string
             cell.z = '@'; // Set cell format to text

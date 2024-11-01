@@ -29,12 +29,12 @@ $apiBib = $secrets['API_BIB'];
 	  else{
 
         $result[] = [
-            'Title' => 'No results for ' . $record['Title'] ?? '',
-            'Author' => 'No results for ' . $record['Author'] ?? '',
-            'Contributor' => 'No results for ' . $record['Contributor'] ?? '',
-            'Year' => 'No results for ' .  urlencode($record['Year'] ?? ''),
-            'Course Code' => urlencode($record['Course Number'] ?? ''),
-            'Format' => 'N/A'
+            'Title - Input' => 'No results for ' . $record['Title - Input'] ?? '',
+            'Author - Input' => 'No results for ' . $record['Author - Input'] ?? '',
+            'Contributor - Input' => 'No results for ' . $record['Contributor - Input'] ?? '',
+            'Year - Input' => 'No results for ' .  urlencode($record['Year - Input'] ?? ''),
+            'Course Code - Input' => urlencode($record['Course Number - Input'] ?? ''),
+            'Format - Input' => 'N/A'
         ];
         
 
@@ -68,23 +68,41 @@ $apiBib = $secrets['API_BIB'];
 
 
 function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
-    $title = $row['Title'] ?? '';
-    $author = $row['Author'] ?? '';
-    $contributor = $row['Contributor'] ?? '';
-    $publisher = $row['Publisher'] ?? '';
-    $year = urlencode($row['Year'] ?? '');
-    $course_number = urlencode($row['Course Number'] ?? '');
-    $course_semester = urlencode($row['Course Semester'] ?? '');
-    $instructor = urlencode($row['Instructor Last Name'] ?? '');
-    
+    $title = $row['Title - Input'] ?? '';
+
+    $authorFirst = $row['Author First - Input'] ?? '';
+
+    $authorLast = $row['Author Last - Input'] ?? '';
+
+    $contributorFirst = $row['Contributor First - Input'] ?? '';
+
+    $contributorLast = $row['Contributor Last - Input'] ?? '';
+
+    $publisher = $row['Publisher - Input'] ?? '';
+
+    $year = urlencode($row['Year - Input'] ?? '');
+	
+
+		
+	$format = $row['Format - Input'];
+	
+	
+
+
+    $course_number = urlencode($row['Course Number - Input'] ?? '');
+
+    $course_semester = urlencode($row['Course Semester - Input'] ?? '');
+
+    $instructor = urlencode($row['Instructor Last Name - Input'] ?? '');
+
     $query = "https://tufts.alma.exlibrisgroup.com/view/sru/01TUN_INST?version=1.2&operation=searchRetrieve&recordSchema=marcxml";
     
     if (!empty($title)) {
 		// Remove punctuation marks ,:;. and "\
-		$title = preg_replace('/[,:;."\']/', ' ', $title);
+		$title = preg_replace('/[,:;."\'\â€œ\â€\â€˜\â€™]/', ' ', $title);
 
 		// Replace hyphens with spaces
-		$title = preg_replace('/[-]/', ' ', $title);
+		$//title = preg_replace('/[-]/', ' ', $title);
 
 		// Replace ampersands with spaces
 		$title = preg_replace('/[&]/', ' ', $title);
@@ -92,8 +110,7 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 
         $query .= "&query=alma.title=%22*" . urlencode($title) . "*%22";
-				 $query .= "&query=alma.title=%22*" . urlencode($title) . "*%22";
-	
+				 
     }
 
 	else {
@@ -102,13 +119,13 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 			'Title' => 'No results for ' . ($title ?? ''),
 
-			'Author' => 'No results for ' . ($author ?? ''),
+			'Author' => 'No results for ' . ($authorLast ?? ''),
 
 			'Publisher' => 'No results for ' . ($publisher ?? ''),
 
-			'Year' => 'No results for ' . ($year ?? ''),
+			'Date' => 'No results for ' . ($year ?? ''),
 
-			'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+			'course_code' => $jsonCourse['course'][0]['code'] ?? '',
 
 			'Returned Format' => 'N/A'
 
@@ -116,7 +133,7 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 
 
-		// Copy the fields that were passed into the input that aren’t used in processing for return
+		// Copy the fields that were passed into the input that arenï¿½t used in processing for return
 
 		foreach ($row as $key => $value) {
 
@@ -131,30 +148,21 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
 
 		exit;
 	}
-    if (!empty($author)) {
-        if(strpos($author, ';') !== false){
-            $pattern = '/^([^;]+).+?;.+?$/i';
-            $replacement = '$1';
-            $author = preg_replace($pattern, $replacement, $author);
+     if (!empty($authorLast)) {
 
-        }
-    		// Remove titles and roles like 'trans.', 'ed.', 'eds.'
+    if(!empty($authorFirst)){
 
-            if (strpos($author, 'trans.') !== false || strpos($author, 'ed.') !== false || strpos($author, 'eds.') !== false){
-            $pattern = '/(ed.\s*|trans\.\s*)(.+)/i';
-            $replacement = '$2';
-            $author = preg_replace($pattern, $replacement, $author);
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($authorLast . "," . $authorFirst) . "*%22";
 
-        }
-        // Check if the author string contains a comma
-    if (strpos($author, ',') !== false) {
-        // Clean up the format "${last},*${first}"
-        $pattern = '/^([^,]+),\s*([^,]+).*$/i';
-        $replacement = '${1}*${2}';
-        $author = preg_replace($pattern, $replacement, $author);
     }
-        $query .= "%20AND%20alma.creator=%22*" . urlencode($author) . "*%22";
-}    
+
+    else{
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($authorLast) . "*%22";
+
+
+    }
+
+}
     if (!empty($contributor)) {
         if(strpos($contributor, ';') !== false){
             $pattern = '/^([^;]+).+?;.+?$/i';
@@ -169,25 +177,39 @@ function searchAlmaSruApi($row, $apiKeyCourses, $apiBib) {
             $contributor = preg_replace($pattern, $replacement, $contributor);
 
         }
-        // Check if the author string contains a comma
-    if (strpos($contributor, ',') !== false) {
-        // Clean up the format "${last},*${first}"
-        $pattern = '/^([^,]+),\s*([^,]+).*$/i';
-        $replacement = '${1}*${2}';
-             $contributor = preg_replace($pattern, $replacement, $contributor);
+  if (!empty($authorLast)) {
+
+    if(!empty($authorFirst)){
+
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($authorLast . "," . $authorFirst) . "*%22";
 
     }
 
-		else{
-			$pattern = '/^([^ ]+)\s+([^ ]+).*$/i';
-			$replacement = '${2},*${1}'; 
-			$contributor = preg_replace($pattern, $replacement, $contributor);
-		}
-        $query .= "%20AND%20alma.creator=%22*" . urlencode($contributor) . "*%22";
+    else{
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($authorLast) . "*%22";
+
+
     }
+
+}
+   if (!empty($contributorLast)) {
+
+    if(!empty($contributorFirst)){
+
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($contributorLast . "," . $contributorFirst) . "*%22";
+
+    }
+
+    else{
+        $query .= "%20AND%20alma.creator=%22*" . urlencode($contributorLast) . "*%22";
+
+
+    }
+
+}
     if (!empty($year)) {
 
-        $query .= "%20AND%20alma.main_pub_date=" . $year;
+           $query .= "%20AND%20%28alma.main_public_date=%22" . $year . "%22%20OR%20alma.date_of_publication=%22" . $year . "%22%29";
 
     }
 	
@@ -323,9 +345,9 @@ if (count($records) > 0) {
 
                             'ISBN' => $xpath->query("//datafield[@tag='020']/subfield[@code='a']")->item(0)->nodeValue,
 
-                            'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+                            'course_code' => $jsonCourse['course'][0]['code'] ?? '',
 
-                            'Course Section' => $jsonCourse['course'][0]['section'] ?? '',
+                            'course_section' => $jsonCourse['course'][0]['section'] ?? '',
 							
 							'Library' => $library ?? '',
 							
@@ -339,11 +361,13 @@ if (count($records) > 0) {
 
                             'Returned Format' => 'Physical'
 
+                            
+
                         ];
 
 
 
-                        // Copy the fields that were passed into the input that aren’t used in processing for return
+                        // Copy the fields that were passed into the input that arenï¿½t used in processing for return
 
                         foreach ($row as $key => $value) {
 
@@ -413,9 +437,9 @@ if (count($records) > 0) {
 
                     'ISBN' => $xpath->query("//datafield[@tag='020']/subfield[@code='a']")->item(0)->nodeValue,
 
-                    'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+                    'course_code' => $jsonCourse['course'][0]['code'] ?? '',
 
-                    'Course Section' => $jsonCourse['course'][0]['section'] ?? '',
+                    'course_section' => $jsonCourse['course'][0]['section'] ?? '',
 
                     'Returned Format' => 'Electronic'
 
@@ -423,7 +447,7 @@ if (count($records) > 0) {
 
 
 
-                // Copy the fields that were passed into the input that aren’t used in processing for return
+                // Copy the fields that were passed into the input that arenï¿½t used in processing for return
 
                 foreach ($row as $key => $value) {
 
@@ -457,7 +481,9 @@ if (count($records) > 0) {
 
             'Year' => 'No results for ' . ($year ?? ''),
 
-            'Course Code' => $jsonCourse['course'][0]['code'] ?? '',
+            'course_code' => $jsonCourse['course'][0]['code'] ?? '',
+
+            'course_section' => $jsonCourse['course'][0]['section'] ?? '',
 
             'Returned Format' => 'N/A'
 
@@ -465,7 +491,7 @@ if (count($records) > 0) {
 
 
 
-        // Copy the fields that were passed into the input that aren’t used in processing for return
+        // Copy the fields that were passed into the input that arenï¿½t used in processing for return
 
         foreach ($row as $key => $value) {
 
@@ -490,7 +516,9 @@ if (count($records) > 0) {
 
             'Year' => 'No course for ' . ($year ?? ''),
 
-            'Course Code' =>  $course_number . "-" . $course_semester . "-" . $instructor ?? '',
+            'course_code' =>  $course_number . "-" . $course_semester . "-" . $instructor ?? '',
+
+            'course_section' => $jsonCourse['course'][0]['section'] ?? '',
 
             'Returned Format' => 'N/A'
 
